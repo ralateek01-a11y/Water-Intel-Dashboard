@@ -20,6 +20,8 @@ import {
   Sparkles,
   FileText,
   BarChart3,
+  Radio,
+  Network,
 } from 'lucide-react';
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -33,6 +35,33 @@ interface WaterAccessDetail {
   nearbyWaterSources: { plant: string; distance: string; capacity: string; status: string }[];
   availabilityTimeline: { year: number; score: number }[];
   supportingDocuments: { name: string; type: string }[];
+}
+
+interface InfrastructureDetail {
+  electrical: {
+    gridOperator: string;
+    substation: string;
+    voltage: string;
+    distance: string;
+    spareCapacity: string;
+  };
+  fiber: {
+    provider: string;
+    redundancy: string;
+    bandwidth: string;
+    plannedExpansion: string;
+  };
+  transportation: {
+    nearestHighway: string;
+    airportDistance: string;
+    logisticsNotes: string;
+  };
+  industrial: {
+    nearbyIndustrialZones: string[];
+    utilityCorridors: string[];
+    existingDataCenters: string[];
+  };
+  aiRecommendation: string;
 }
 
 interface Site {
@@ -74,6 +103,7 @@ interface Site {
     status: string;
   }[];
   waterAccessDetail?: WaterAccessDetail;
+  infrastructureDetail?: InfrastructureDetail;
 }
 
 interface SiteDetailProps {
@@ -249,6 +279,28 @@ function SectionHeader({ icon: Icon, title }: { icon: React.ComponentType<React.
   );
 }
 
+/* ─── Reusable AI Callout ─────────────────────────────────── */
+function AICallout({ text }: { text: string }) {
+  return (
+    <div className="relative bg-sky-500/5 border border-sky-500/20 rounded-xl p-3.5 pl-4">
+      <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-sky-500/50 rounded-l-xl" />
+      <div className="flex items-start gap-2">
+        <Sparkles className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
+        <p className="text-[13px] text-[#D1D5DB] leading-relaxed">{text}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Tag pill ────────────────────────────────────────────── */
+function Tag({ label }: { label: string }) {
+  return (
+    <span className="inline-block text-[11px] font-medium px-2.5 py-1 rounded-full bg-[#1F2937] text-[#9CA3AF] border border-[#374151]">
+      {label}
+    </span>
+  );
+}
+
 /* ─── waterInfrastructure type → map colour ──────────────── */
 function wInfraColor(type: string) {
   if (type === 'desalination') return '#22D3EE';   // cyan
@@ -314,13 +366,7 @@ function WaterAccessTab({ site }: { site: Site }) {
           </div>
 
           {/* AI Recommendation callout */}
-          <div className="relative bg-sky-500/5 border border-sky-500/20 rounded-xl p-3.5 pl-4">
-            <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-sky-500/50 rounded-l-xl" />
-            <div className="flex items-start gap-2">
-              <Sparkles className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
-              <p className="text-[13px] text-[#D1D5DB] leading-relaxed">{detail.aiRecommendation}</p>
-            </div>
-          </div>
+          <AICallout text={detail.aiRecommendation} />
         </div>
       </div>
 
@@ -490,6 +536,134 @@ function WaterAccessTab({ site }: { site: Site }) {
           </MapContainer>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ─── Infrastructure tab ──────────────────────────────────── */
+function InfrastructureTab({ site }: { site: Site }) {
+  const detail = site.infrastructureDetail;
+
+  if (!detail) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <p className="text-[#4B5563] text-sm">Infrastructure detail not available for this site.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+
+      {/* ── 2×2 card grid ── */}
+      <div className="grid grid-cols-2 gap-4">
+
+        {/* Electrical */}
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-[#1F2937] flex items-center justify-center flex-shrink-0">
+              <Zap className="w-4 h-4 text-amber-400" />
+            </div>
+            <span className="text-sm font-semibold text-white">Electrical Infrastructure</span>
+          </div>
+          <div className="flex flex-col gap-2 text-[13px]">
+            <Row label="Grid operator" value={detail.electrical.gridOperator} />
+            <Row label="Substation" value={<span className="text-xs text-right leading-snug">{detail.electrical.substation}</span>} />
+            <Row label="Voltage" value={
+              <span className="font-semibold text-amber-400">{detail.electrical.voltage}</span>
+            } />
+            <Row label="Distance" value={detail.electrical.distance} />
+            <Row label="Spare capacity" value={
+              <span className="font-semibold text-[#10B981]">{detail.electrical.spareCapacity}</span>
+            } />
+          </div>
+        </div>
+
+        {/* Fiber */}
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-[#1F2937] flex items-center justify-center flex-shrink-0">
+              <Network className="w-4 h-4 text-sky-400" />
+            </div>
+            <span className="text-sm font-semibold text-white">Fiber Connectivity</span>
+          </div>
+          <div className="flex flex-col gap-2 text-[13px]">
+            <Row label="Provider(s)" value={<span className="text-xs text-right leading-snug">{detail.fiber.provider}</span>} />
+            <Row label="Redundancy" value={<span className="text-xs text-right leading-snug">{detail.fiber.redundancy}</span>} />
+            <Row label="Bandwidth" value={
+              <span className="font-semibold text-sky-400">{detail.fiber.bandwidth}</span>
+            } />
+            <div className="mt-1 pt-2 border-t border-[#1F2937]">
+              <p className="text-[11px] text-[#6B7280] mb-1">Planned expansion</p>
+              <p className="text-[12px] text-[#D1D5DB] leading-snug">{detail.fiber.plannedExpansion}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Transportation */}
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-[#1F2937] flex items-center justify-center flex-shrink-0">
+              <Truck className="w-4 h-4 text-violet-400" />
+            </div>
+            <span className="text-sm font-semibold text-white">Transportation</span>
+          </div>
+          <div className="flex flex-col gap-2 text-[13px]">
+            <Row label="Nearest highway" value={<span className="text-xs text-right leading-snug">{detail.transportation.nearestHighway}</span>} />
+            <Row label="Airport" value={<span className="text-xs text-right leading-snug">{detail.transportation.airportDistance}</span>} />
+            <div className="mt-1 pt-2 border-t border-[#1F2937]">
+              <p className="text-[11px] text-[#6B7280] mb-1">Logistics notes</p>
+              <p className="text-[12px] text-[#D1D5DB] leading-snug">{detail.transportation.logisticsNotes}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Industrial */}
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-[#1F2937] flex items-center justify-center flex-shrink-0">
+              <Factory className="w-4 h-4 text-rose-400" />
+            </div>
+            <span className="text-sm font-semibold text-white">Industrial Infrastructure</span>
+          </div>
+          <div className="flex flex-col gap-3 text-[13px]">
+            {/* Nearby industrial zones */}
+            <div>
+              <p className="text-[11px] text-[#6B7280] mb-1.5">Nearby industrial zones</p>
+              <div className="flex flex-wrap gap-1.5">
+                {detail.industrial.nearbyIndustrialZones.length > 0
+                  ? detail.industrial.nearbyIndustrialZones.map((z, i) => <Tag key={i} label={z} />)
+                  : <span className="text-[12px] text-[#4B5563]">None identified</span>}
+              </div>
+            </div>
+            {/* Utility corridors */}
+            <div>
+              <p className="text-[11px] text-[#6B7280] mb-1.5">Utility corridors</p>
+              <div className="flex flex-wrap gap-1.5">
+                {detail.industrial.utilityCorridors.length > 0
+                  ? detail.industrial.utilityCorridors.map((c, i) => <Tag key={i} label={c} />)
+                  : <span className="text-[12px] text-[#4B5563]">None identified</span>}
+              </div>
+            </div>
+            {/* Existing data centers */}
+            <div>
+              <p className="text-[11px] text-[#6B7280] mb-1.5">Existing data centers</p>
+              <div className="flex flex-wrap gap-1.5">
+                {detail.industrial.existingDataCenters.length > 0
+                  ? detail.industrial.existingDataCenters.map((d, i) => (
+                      <span key={i} className="inline-block text-[11px] font-medium px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                        {d}
+                      </span>
+                    ))
+                  : <span className="text-[12px] text-[#4B5563]">None in vicinity</span>}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── AI Recommendation ── */}
+      <AICallout text={detail.aiRecommendation} />
     </div>
   );
 }
@@ -706,7 +880,8 @@ export function SiteDetail({ site }: SiteDetailProps) {
       <div className="p-5">
         {activeTab === 'Overview' && <OverviewTab site={site} />}
         {activeTab === 'Water Access' && <WaterAccessTab site={site} />}
-        {activeTab !== 'Overview' && activeTab !== 'Water Access' && <PlaceholderTab name={activeTab} />}
+        {activeTab === 'Infrastructure' && <InfrastructureTab site={site} />}
+        {activeTab !== 'Overview' && activeTab !== 'Water Access' && activeTab !== 'Infrastructure' && <PlaceholderTab name={activeTab} />}
       </div>
     </div>
   );

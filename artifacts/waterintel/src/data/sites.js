@@ -59,6 +59,34 @@ export const sites = [
         { name: "Heet Industrial City Water MOU", type: "Agreement" },
       ],
     },
+    infrastructureDetail: {
+      electrical: {
+        gridOperator: "Saudi Electricity Company",
+        substation: "Heet Industrial Substation H-7",
+        voltage: "380 kV",
+        distance: "1.4 km",
+        spareCapacity: "180 MW available",
+      },
+      fiber: {
+        provider: "STC & Mobily (dual carrier)",
+        redundancy: "Dual-path, fully redundant",
+        bandwidth: "100 Gbps",
+        plannedExpansion: "400 Gbps upgrade contracted, delivery Q3 2026",
+      },
+      transportation: {
+        nearestHighway: "Ring Road 8 — direct site access",
+        airportDistance: "82 km to King Khalid International Airport",
+        logisticsNotes:
+          "Direct heavy-vehicle access via Ring Road 8; 24/7 gate operations supported. No access road extension required.",
+      },
+      industrial: {
+        nearbyIndustrialZones: ["King Khalid Industrial Park (5.3 km)", "Heet Technology Cluster (8.1 km)"],
+        utilityCorridors: ["Heet Industrial Distribution Main", "Riyadh Power Corridor R-8", "Riyadh TSE Ring Pipeline"],
+        existingDataCenters: ["Riyadh DC Campus (18 km)", "STC Hyperscale Hub (22 km)"],
+      },
+      aiRecommendation:
+        "Heet Industrial City leads all evaluated sites on infrastructure readiness. The 380 kV substation at 1.4 km provides 180 MW of immediately available power capacity — well in excess of a typical 50–100 MW hyperscale deployment. Dual-carrier fiber with a contracted 400 Gbps upgrade ensures long-term connectivity headroom. No significant infrastructure constraints identified.",
+    },
   },
   {
     id: "site-002",
@@ -119,6 +147,34 @@ export const sites = [
         { name: "SWCC Eastern Feeder Capacity Report", type: "Technical" },
         { name: "NWC Riyadh East Infrastructure Plan", type: "Regulatory" },
       ],
+    },
+    infrastructureDetail: {
+      electrical: {
+        gridOperator: "Saudi Electricity Company",
+        substation: "SEC Grid Station K-12",
+        voltage: "380 kV",
+        distance: "2.6 km",
+        spareCapacity: "140 MW available",
+      },
+      fiber: {
+        provider: "STC (primary carrier)",
+        redundancy: "Single-path with planned secondary route",
+        bandwidth: "40 Gbps",
+        plannedExpansion: "Dual-path upgrade contracted, delivery Q4 2026",
+      },
+      transportation: {
+        nearestHighway: "Eastern Ring Road — 2 km paved spur road",
+        airportDistance: "56 km to King Khalid International Airport",
+        logisticsNotes:
+          "Eastern Ring Road provides strong logistics connectivity. The 2 km spur road may require reinforcement for sustained heavy equipment loads during construction.",
+      },
+      industrial: {
+        nearbyIndustrialZones: ["Riyadh Logistics Hub (6.1 km)", "Eastern Industrial Zone (11.2 km)"],
+        utilityCorridors: ["Eastern Ring Road TSE Lateral", "Al-Khair Distribution Spur", "Riyadh Smart Water Network (planned)"],
+        existingDataCenters: ["Al-Khair Industrial City DC (co-located)", "Riyadh Central DC (31 km)"],
+      },
+      aiRecommendation:
+        "Al-Khair Industrial City offers strong infrastructure fundamentals with a 380 kV substation at 2.6 km and 140 MW of spare capacity. The primary constraint — a single-path 40 Gbps fiber connection — is being resolved by a contracted dual-path upgrade due Q4 2026. Infrastructure risk is low for initial deployments given existing bandwidth is sufficient for Phase 1.",
     },
   },
   {
@@ -181,6 +237,34 @@ export const sites = [
         { name: "NWC Capacity Reservation Request Form", type: "Agreement" },
       ],
     },
+    infrastructureDetail: {
+      electrical: {
+        gridOperator: "Saudi Electricity Company",
+        substation: "SEC Substation S-3",
+        voltage: "230 kV",
+        distance: "1.9 km",
+        spareCapacity: "120 MW available",
+      },
+      fiber: {
+        provider: "STC & Mobily (dual carrier)",
+        redundancy: "Dual-path, fully redundant",
+        bandwidth: "100 Gbps",
+        plannedExpansion: "Direct peering to Riyadh–Qassim Backbone when complete (2026)",
+      },
+      transportation: {
+        nearestHighway: "Highway 65 — direct site access",
+        airportDistance: "138 km to King Khalid International Airport",
+        logisticsNotes:
+          "Highway 65 supports heavy freight; the 135 km distance from Riyadh increases equipment delivery lead times vs. closer Riyadh-region sites.",
+      },
+      industrial: {
+        nearbyIndustrialZones: ["Sudair Techno Valley (4.2 km)", "Sudair Industrial Park (6.8 km)"],
+        utilityCorridors: ["Highway 65 TSE Corridor", "Sudair Industrial Feeder", "National Fiber Backbone Node (5.7 km)"],
+        existingDataCenters: ["Sudair Techno Valley DC (4.2 km)"],
+      },
+      aiRecommendation:
+        "Sudair has solid infrastructure headroom — 120 MW spare power on a 230 kV substation and dual-path 100 Gbps fiber at 1.9 km. The site's primary drawback is its 135 km distance from Riyadh, which adds cost and time to logistics and ongoing O&M. For a self-contained hyperscale deployment, infrastructure risk is low and manageable.",
+    },
   },
   {
     id: "site-004",
@@ -241,6 +325,34 @@ export const sites = [
         { name: "Eastern Province Water Demand Forecast", type: "Technical" },
         { name: "Jubail Canal Environmental Impact Study", type: "Compliance" },
       ],
+    },
+    infrastructureDetail: {
+      electrical: {
+        gridOperator: "Saudi Electricity Company — Eastern Region",
+        substation: "ARAMCO Substation D-22",
+        voltage: "380 kV",
+        distance: "2.3 km",
+        spareCapacity: "95 MW available",
+      },
+      fiber: {
+        provider: "STC, Mobily & Zain (triple carrier)",
+        redundancy: "Multi-path, fully redundant",
+        bandwidth: "200 Gbps",
+        plannedExpansion: "Subsea cable landing station integration planned for 2027",
+      },
+      transportation: {
+        nearestHighway: "Highway 40 — direct site access",
+        airportDistance: "28 km to King Fahd International Airport",
+        logisticsNotes:
+          "Excellent port connectivity via Dammam Port Authority (8.2 km); supports large equipment imports without overland long-haul. Best logistics profile of all evaluated sites.",
+      },
+      industrial: {
+        nearbyIndustrialZones: ["Dammam 2nd Industrial City (co-located)", "ARAMCO Industrial Precinct (12 km)"],
+        utilityCorridors: ["Eastern Province TSE Ring", "Eastern Province Fiber Ring (1.1 km)", "Eastern Province Water Transmission Main"],
+        existingDataCenters: ["Dammam Edge Data Center (14 km)", "ARAMCO IT Hub (16 km)"],
+      },
+      aiRecommendation:
+        "Dammam 2nd Industrial City offers the best fiber diversity of all evaluated sites — three carriers with 200 Gbps and planned subsea integration. Port access is a significant logistics advantage for large-scale hardware imports. Electrical capacity at 95 MW spare is adequate but tighter than Riyadh-region sites; early power reservation is recommended.",
     },
   },
   {
@@ -303,6 +415,34 @@ export const sites = [
         { name: "Buraydah TSE Expansion Feasibility Study", type: "Technical" },
       ],
     },
+    infrastructureDetail: {
+      electrical: {
+        gridOperator: "Saudi Electricity Company",
+        substation: "SEC Grid Station Q-5",
+        voltage: "132 kV",
+        distance: "4.1 km",
+        spareCapacity: "45 MW available",
+      },
+      fiber: {
+        provider: "STC (single carrier)",
+        redundancy: "Single-path, no redundancy",
+        bandwidth: "20 Gbps",
+        plannedExpansion: "Riyadh–Qassim Backbone Feeder will add 100 Gbps when complete (est. 2026)",
+      },
+      transportation: {
+        nearestHighway: "Highway 60 — 4 km regional road",
+        airportDistance: "22 km to Prince Nayef bin Abdulaziz Airport",
+        logisticsNotes:
+          "4 km regional road is partially unpaved and suitable for light freight only. Road upgrade is scheduled for 2026 as part of the industrial city expansion programme.",
+      },
+      industrial: {
+        nearbyIndustrialZones: ["Qassim Industrial City (co-located)", "Unayzah Light Industry Zone (28 km)"],
+        utilityCorridors: ["Qassim Regional TSE Network", "Buraydah North Distribution"],
+        existingDataCenters: ["Qassim University Research DC (9.8 km)"],
+      },
+      aiRecommendation:
+        "Qassim Industrial City's infrastructure is constrained at present — 45 MW of spare capacity on a 132 kV substation, single-path fiber at 20 Gbps, and a partially unpaved access road. However, the Riyadh–Qassim Backbone Feeder completion in 2026 will substantially upgrade connectivity. For deployments planned post-2026, the infrastructure profile improves significantly.",
+    },
   },
   {
     id: "site-006",
@@ -363,6 +503,34 @@ export const sites = [
         { name: "Jubail 3rd Zone Infrastructure Report 2024", type: "Technical" },
         { name: "MEWA Coastal Water Use Guidelines", type: "Compliance" },
       ],
+    },
+    infrastructureDetail: {
+      electrical: {
+        gridOperator: "Saudi Electricity Company — Eastern Region",
+        substation: "Sadara Chemical Substation (shared)",
+        voltage: "132 kV",
+        distance: "5.4 km",
+        spareCapacity: "35 MW available",
+      },
+      fiber: {
+        provider: "SABIC Fiber Network (industrial network)",
+        redundancy: "Single-path, industrial network only",
+        bandwidth: "10 Gbps",
+        plannedExpansion: "Commercial dual-path planned under RCJY Phase 3 development (est. 2028)",
+      },
+      transportation: {
+        nearestHighway: "Highway 95 — 7 km industrial bypass road",
+        airportDistance: "62 km to King Fahd International Airport",
+        logisticsNotes:
+          "Industrial bypass road is serviceable but not designed for high-frequency logistics. Jubail Commercial Port (12.1 km) provides an alternative route for large hardware imports.",
+      },
+      industrial: {
+        nearbyIndustrialZones: ["Jubail 3rd Industrial City (co-located)", "Sadara Chemical Complex (adjacent)"],
+        utilityCorridors: ["Jubail Industrial Zone TSE Loop", "Sadara Chemical Complex Feeder"],
+        existingDataCenters: ["Jubail 3rd Industrial City DC (planned, not operational)"],
+      },
+      aiRecommendation:
+        "Jubail 3rd Industrial City is currently infrastructure-constrained — 35 MW spare capacity on a shared 132 kV substation, 10 Gbps industrial-only fiber, and a 7 km bypass to the highway. The RCJY Phase 3 development programme is expected to address fiber and road constraints by 2028. Re-evaluate after those improvements are confirmed.",
     },
   },
   {
@@ -425,6 +593,34 @@ export const sites = [
         { name: "NWC Expansion Feasibility – Afif Zone", type: "Technical" },
       ],
     },
+    infrastructureDetail: {
+      electrical: {
+        gridOperator: "Saudi Electricity Company",
+        substation: "SEC Rural Feeder AF-2",
+        voltage: "33 kV",
+        distance: "9.8 km",
+        spareCapacity: "8 MW available",
+      },
+      fiber: {
+        provider: "None (microwave relay only)",
+        redundancy: "No fiber — single-path microwave link",
+        bandwidth: "~1 Gbps (microwave)",
+        plannedExpansion: "No fiber extension on current NWC or STC infrastructure roadmap",
+      },
+      transportation: {
+        nearestHighway: "Highway 40 — 12 km unpaved access road",
+        airportDistance: "18.5 km to Afif Regional Airstrip (limited cargo capacity)",
+        logisticsNotes:
+          "Unpaved access road severely limits construction logistics. No rail or port access. Nearest paved highway is 12 km of unmaintained desert track.",
+      },
+      industrial: {
+        nearbyIndustrialZones: ["Afif Regional Industrial Area (21 km)"],
+        utilityCorridors: ["Highway 40 TSE Lateral (Proposed, not funded)"],
+        existingDataCenters: [],
+      },
+      aiRecommendation:
+        "Afif Technology Industrial Zone has critical infrastructure deficiencies. 8 MW of available power on a 33 kV rural feeder is insufficient for any meaningful data center load, and the complete absence of fiber connectivity is a fundamental barrier. Significant capital investment in transmission infrastructure and fiber deployment would be required before this site is viable.",
+    },
   },
   {
     id: "site-008",
@@ -485,6 +681,34 @@ export const sites = [
         { name: "Wadi Al-Dawasir Aquifer Depletion Study", type: "Technical" },
         { name: "Saudi Green Initiative Water Impact Assessment", type: "Compliance" },
       ],
+    },
+    infrastructureDetail: {
+      electrical: {
+        gridOperator: "Saudi Electricity Company",
+        substation: "SEC Rural Feeder WD-1",
+        voltage: "33 kV",
+        distance: "15.6 km",
+        spareCapacity: "3 MW available",
+      },
+      fiber: {
+        provider: "None (satellite only)",
+        redundancy: "No terrestrial connectivity — satellite only",
+        bandwidth: "<100 Mbps (satellite)",
+        plannedExpansion: "Not on any known NWC, STC, or government expansion roadmap",
+      },
+      transportation: {
+        nearestHighway: "Nearest paved road 28 km via desert track",
+        airportDistance: "31.4 km to Wadi Al-Dawasir Airport (cargo-limited)",
+        logisticsNotes:
+          "Desert track access is impassable in adverse weather. Construction logistics would require significant temporary road works as a prerequisite to any development.",
+      },
+      industrial: {
+        nearbyIndustrialZones: ["Wadi Al-Dawasir Agricultural Zone (35 km)"],
+        utilityCorridors: [],
+        existingDataCenters: [],
+      },
+      aiRecommendation:
+        "Wadi Al-Dawasir Industrial Park is not viable for data center development under current or foreseeable infrastructure conditions. 3 MW on a 33 kV feeder 15.6 km away, satellite-only connectivity, and a 28 km desert track as the sole access route represent a fundamental infrastructure deficit. This site is not recommended.",
     },
   },
 ];
