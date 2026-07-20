@@ -7,6 +7,7 @@ import { AIChatPage } from './components/AIChatPage';
 import { ProjectsPage, type Project } from './components/ProjectsPage';
 import { ProjectDetail } from './components/ProjectDetail';
 import { WaterInfrastructurePage } from './components/WaterInfrastructurePage';
+import { DataCentersPage } from './components/DataCentersPage';
 import { 
   Droplet, 
   LayoutDashboard, 
@@ -25,7 +26,7 @@ import {
   Bell
 } from 'lucide-react';
 
-type Page = 'site-finder' | 'ai-chat' | 'projects' | 'project-detail' | 'water-infrastructure';
+type Page = 'site-finder' | 'ai-chat' | 'projects' | 'project-detail' | 'water-infrastructure' | 'data-centers';
 
 function Shell() {
   const sortedSites = getSitesSortedByScore();
@@ -125,7 +126,7 @@ function Shell() {
     { icon: FolderOpen,      label: 'Projects',          page: 'projects'    },
     { icon: MapPin,          label: 'Site Finder',       page: 'site-finder' },
     { icon: Workflow,        label: 'Water Infrastructure', page: 'water-infrastructure' },
-    { icon: Server,          label: 'Data Centers'                           },
+    { icon: Server,          label: 'Data Centers',        page: 'data-centers'         },
     { icon: FileText,        label: 'Documents & Reports'                    },
     { icon: MessageSquare,   label: 'AI Chat Assistant', page: 'ai-chat'     },
     { icon: BookOpen,        label: 'Regulatory Guide'                       },
@@ -282,6 +283,11 @@ function Shell() {
           {/* ── Water Infrastructure Page ── */}
           {activePage === 'water-infrastructure' && (
             <WaterInfrastructurePage />
+          )}
+
+          {/* ── Data Centers Page ── */}
+          {activePage === 'data-centers' && (
+            <DataCentersPage />
           )}
 
           {/* ── Projects List Page ── */}
