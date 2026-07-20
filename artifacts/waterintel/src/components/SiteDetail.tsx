@@ -28,11 +28,16 @@ import {
   CalendarDays,
   Waves,
   ArrowUpRight,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  MessageSquare,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { waterInfrastructure } from '../data/waterInfrastructure';
+import { getDocumentsForSite } from '../data/siteDocuments';
 
 /* ─── types ──────────────────────────────────────────────── */
 interface WaterAccessDetail {
@@ -148,6 +153,7 @@ interface Site {
 
 interface SiteDetailProps {
   site: Site;
+  onNavigateToChat?: (prefill: string) => void;
 }
 
 /* ─── helpers ─────────────────────────────────────────────── */
@@ -1365,6 +1371,120 @@ function ForecastTab({ site }: { site: Site }) {
   );
 }
 
+/* ─── Documents tab ───────────────────────────────────────── */
+const DOC_TYPE_ICONS: Record<string, React.ElementType> = {
+  'National Strategy':            Shield,
+  'Government Report':            FileBarChart2,
+  'Technical Study':              BarChart3,
+  'Environmental Assessment':     Thermometer,
+  'Infrastructure Announcement':  Building2,
+  'Regulatory Notice':            FileText,
+};
+const DOC_TYPE_COLORS: Record<string, string> = {
+  'National Strategy':            'text-violet-400  bg-violet-500/10  border-violet-500/20',
+  'Government Report':            'text-sky-400     bg-sky-500/10     border-sky-500/20',
+  'Technical Study':              'text-amber-400   bg-amber-500/10   border-amber-500/20',
+  'Environmental Assessment':     'text-[#10B981]   bg-[#10B981]/10   border-[#10B981]/20',
+  'Infrastructure Announcement':  'text-rose-400    bg-rose-500/10    border-rose-500/20',
+  'Regulatory Notice':            'text-orange-400  bg-orange-500/10  border-orange-500/20',
+};
+
+function DocumentsTab({ site, onNavigateToChat }: { site: Site; onNavigateToChat?: (prefill: string) => void }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const docs = getDocumentsForSite(site.id);
+
+  if (docs.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <p className="text-[#4B5563] text-sm">No documents on file for this site.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-[12px] text-[#6B7280]">
+        {docs.length} documents related to <span className="text-[#D1D5DB] font-medium">{site.name}</span>
+      </p>
+
+      {docs.map((doc) => {
+        const IconComp = DOC_TYPE_ICONS[doc.type] ?? FileText;
+        const colorClass = DOC_TYPE_COLORS[doc.type] ?? 'text-[#6B7280] bg-[#1F2937] border-[#374151]';
+        const isExpanded = expandedId === doc.id;
+
+        return (
+          <div
+            key={doc.id}
+            className="bg-[#0D1424] border border-[#1F2937] rounded-xl overflow-hidden transition-all"
+          >
+            {/* Card header */}
+            <div className="p-4 flex items-start gap-3">
+              {/* Type icon */}
+              <div className={`w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0 mt-0.5 ${colorClass}`}>
+                <IconComp className="w-4 h-4" />
+              </div>
+
+              {/* Name + meta */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-[14px] font-semibold text-white leading-snug">{doc.name}</p>
+                  <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${colorClass}`}>
+                      {doc.type}
+                    </span>
+                    <span className="text-[10px] text-[#4B5563] font-medium">{doc.year}</span>
+                  </div>
+                </div>
+                <p className="text-[12px] text-[#9CA3AF] mt-1 leading-relaxed">{doc.summary}</p>
+
+                {/* Expanded summary */}
+                {isExpanded && (
+                  <div className="mt-3 pt-3 border-t border-[#1F2937]">
+                    <p className="text-[12px] text-[#D1D5DB] leading-relaxed">{doc.expandedSummary}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Action row */}
+            <div className="px-4 pb-3 flex items-center gap-2">
+              <button
+                onClick={() => setExpandedId(isExpanded ? null : doc.id)}
+                className="flex items-center gap-1.5 text-[12px] font-medium text-[#6B7280] hover:text-[#D1D5DB] transition-colors"
+              >
+                {isExpanded
+                  ? <><ChevronUp className="w-3.5 h-3.5" /> Hide Summary</>
+                  : <><ChevronDown className="w-3.5 h-3.5" /> Read Summary</>
+                }
+              </button>
+
+              <span className="text-[#1F2937]">·</span>
+
+              <button className="flex items-center gap-1.5 text-[12px] font-medium text-[#6B7280] hover:text-[#D1D5DB] transition-colors">
+                <ExternalLink className="w-3.5 h-3.5" />
+                Open PDF
+              </button>
+
+              {onNavigateToChat && (
+                <>
+                  <span className="text-[#1F2937]">·</span>
+                  <button
+                    onClick={() => onNavigateToChat(`Tell me more about "${doc.name}" and its implications for ${site.name}`)}
+                    className="flex items-center gap-1.5 text-[12px] font-medium text-sky-400 hover:text-sky-300 transition-colors"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    Ask AI
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ─── placeholder tab ─────────────────────────────────────── */
 function PlaceholderTab({ name }: { name: string }) {
   return (
@@ -1375,7 +1495,7 @@ function PlaceholderTab({ name }: { name: string }) {
 }
 
 /* ─── main component ──────────────────────────────────────── */
-export function SiteDetail({ site }: SiteDetailProps) {
+export function SiteDetail({ site, onNavigateToChat }: SiteDetailProps) {
   const [activeTab, setActiveTab] = useState<Tab>('Overview');
   const sc = scoreColors(site.overallScore);
 
@@ -1449,7 +1569,8 @@ export function SiteDetail({ site }: SiteDetailProps) {
         {activeTab === 'Regulatory' && <RegulatoryTab site={site} />}
         {activeTab === 'Cooling Impact' && <CoolingTab site={site} />}
         {activeTab === 'Forecast' && <ForecastTab site={site} />}
-        {activeTab !== 'Overview' && activeTab !== 'Water Access' && activeTab !== 'Infrastructure' && activeTab !== 'Regulatory' && activeTab !== 'Cooling Impact' && activeTab !== 'Forecast' && <PlaceholderTab name={activeTab} />}
+        {activeTab === 'Documents' && <DocumentsTab site={site} onNavigateToChat={onNavigateToChat} />}
+        {activeTab !== 'Overview' && activeTab !== 'Water Access' && activeTab !== 'Infrastructure' && activeTab !== 'Regulatory' && activeTab !== 'Cooling Impact' && activeTab !== 'Forecast' && activeTab !== 'Documents' && <PlaceholderTab name={activeTab} />}
       </div>
     </div>
   );

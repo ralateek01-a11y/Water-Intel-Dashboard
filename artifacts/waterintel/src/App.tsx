@@ -33,6 +33,7 @@ function Shell() {
   const sortedSites = getSitesSortedByScore();
   const [activePage, setActivePage] = useState<Page>('site-finder');
   const [selectedSiteId, setSelectedSiteId] = useState(sortedSites[0]?.id);
+  const [chatPreFill,    setChatPreFill]    = useState<string>('');
   const selectedSite = getSiteById(selectedSiteId);
   const [regionFilter, setRegionFilter] = useState('All Regions');
   const [powerFilter, setPowerFilter] = useState('Any Capacity');
@@ -278,7 +279,7 @@ function Shell() {
 
           {/* ── AI Chat Page ── */}
           {activePage === 'ai-chat' && (
-            <AIChatPage selectedSite={selectedSite} />
+            <AIChatPage selectedSite={selectedSite} initialMessage={chatPreFill} onConsumeInitialMessage={() => setChatPreFill('')} />
           )}
 
           {/* ── Water Infrastructure Page ── */}
@@ -663,7 +664,13 @@ function Shell() {
             {/* Site Detail card — below the map row */}
             {selectedSite && (
               <div className="px-6 pb-6">
-                <SiteDetail site={selectedSite} />
+                <SiteDetail
+                  site={selectedSite}
+                  onNavigateToChat={(prefill) => {
+                    setChatPreFill(prefill);
+                    setActivePage('ai-chat');
+                  }}
+                />
               </div>
             )}
 

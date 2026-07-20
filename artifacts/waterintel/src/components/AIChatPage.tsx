@@ -26,6 +26,8 @@ interface Message {
 
 interface AIChatPageProps {
   selectedSite: Site | null;
+  initialMessage?: string;
+  onConsumeInitialMessage?: () => void;
 }
 
 // ── Suggested prompts ──────────────────────────────────────────────────
@@ -225,12 +227,21 @@ function Sidebar({
 }
 
 // ── Main page ──────────────────────────────────────────────────────────
-export function AIChatPage({ selectedSite }: AIChatPageProps) {
+export function AIChatPage({ selectedSite, initialMessage, onConsumeInitialMessage }: AIChatPageProps) {
   const [messages,          setMessages]          = useState<Message[]>([]);
   const [input,             setInput]             = useState('');
   const [isStreaming,       setIsStreaming]        = useState(false);
   const [error,             setError]             = useState<string | null>(null);
   const [sidebarOpen,       setSidebarOpen]       = useState(true);
+
+  // Pre-fill input when navigated from a document "Ask AI" button
+  useEffect(() => {
+    if (initialMessage) {
+      setInput(initialMessage);
+      onConsumeInitialMessage?.();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialMessage]);
   const [selectedProjectId, setSelectedProjectId] = useState('');
 
   const bottomRef   = useRef<HTMLDivElement>(null);
