@@ -154,6 +154,30 @@ interface Site {
   regulatoryDetail?: RegulatoryDetail;
   coolingDetail?: CoolingDetail;
   forecastDetail?: ForecastDetail;
+  water?: {
+    summary: { availabilityScore: number; distanceToInfrastructure: string; reliability: 'High' | 'Medium' | 'Low' };
+    detail: { cost: string; sustainability: string; droughtRisk: 'Low' | 'Medium' | 'High' };
+  };
+  power?: {
+    summary: { distanceToSubstation: string; availableCapacityMW: number; reliability: 'High' | 'Medium' | 'Low' };
+    detail: { outageHistory: string; electricityPrice: string; renewableAvailability: string; expansionPotential: string };
+  };
+  climate?: {
+    summary: { avgYearlyTemp: string; peakSummerTemp: string; estimatedPUEImpact: string };
+    detail: { humidity: string; extremeHeatDays: number };
+  };
+  connectivity?: {
+    summary: { distanceToBackbone: string; fiberProviders: number; redundancy: 'Yes' | 'No' | 'Partial' };
+    detail: { latencyToMajorCities: string; proximityToIX: string };
+  };
+  land?: {
+    summary: { landPrice: string; parcelSize: string; floodRisk: 'Low' | 'Medium' | 'High' };
+    detail: { flatnessSlope: string; soilStability: string; roomForExpansion: string; distanceToRoads: string };
+  };
+  zoning?: {
+    summary: { dataCenterPermitted: 'Yes' | 'No' | 'Conditional'; sezStatus: string; permittingSpeed: string };
+    detail: { taxIncentives: string; environmentalRestrictions: string; governmentSupport: string; easeOfPermits: 'Easy' | 'Moderate' | 'Difficult' };
+  };
 }
 
 interface SiteDetailProps {
@@ -722,132 +746,117 @@ function InfrastructureTab({ site }: { site: Site }) {
 
 /* ─── Overview tab ────────────────────────────────────────── */
 function OverviewTab({ site }: { site: Site }) {
-  const cooling = [
-    { label: 'Air Cooling', value: site.coolingImpact.airCooling },
-    { label: 'Liquid Cooling', value: site.coolingImpact.liquidCooling },
-    { label: 'Immersion Cooling', value: site.coolingImpact.immersionCooling },
-    { label: 'DLC Cooling', value: site.coolingImpact.dlcCooling },
-  ];
-  const maxCooling = Math.max(...cooling.map((c) => parseCoolingValue(c.value)));
-  const wColors = scoreColors(site.waterAccess.score);
-  const iColors = scoreColors(site.infrastructure.score);
-  const rColors = scoreColors(site.regulatory.score);
+  function ScoreBadge({ score }: { score: number }) {
+    const c = scoreColors(score);
+    const label = score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Moderate' : 'Poor';
+    return (
+      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full border ${c.bg} ${c.text} ${c.border}`}>
+        {label} · {score}
+      </span>
+    );
+  }
+  function RLabel({ v, good, bad }: { v: string; good: string; bad: string }) {
+    const color = v === good ? 'text-[#10B981]' : v === bad ? 'text-red-400' : 'text-amber-400';
+    return <span className={`font-medium ${color}`}>{v}</span>;
+  }
+
+  const w = site.water;
+  const pw = site.power;
+  const cl = site.climate;
+  const co = site.connectivity;
+  const la = site.land;
+  const z = site.zoning;
+
+  const permitColor = (v: string) =>
+    v === 'Yes' ? 'text-[#10B981]' : v === 'No' ? 'text-red-400' : 'text-amber-400';
+
+  const NA = <p className="text-[#4B5563] text-xs italic">Data not available</p>;
 
   return (
-    <div className="flex gap-4 h-full">
-      {/* Left — 2 × 2 grid */}
-      <div className="flex-1 min-w-0 grid grid-cols-2 grid-rows-2 gap-4">
-        {/* Water Access */}
-        <CardShell title="Water Access" icon={Droplet} iconColor="text-sky-400" link="View details">
-          <div className="flex items-center gap-2">
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${wColors.bg} ${wColors.text} ${wColors.border} border`}>
-              {site.waterAccess.score >= 80 ? 'Excellent' : site.waterAccess.score >= 60 ? 'Good' : site.waterAccess.score >= 40 ? 'Moderate' : 'Poor'}
-            </span>
-            <span className={`text-xs font-bold ${wColors.text}`}>{site.waterAccess.score}/100</span>
-          </div>
-          <Row label="Nearest TSE line" value={site.waterAccess.nearestTSELine} />
-          <Row label="Available capacity" value={site.waterAccess.availableCapacity} />
-          <Row
-            label="Source plant"
-            value={<span className="text-[#10B981] text-xs">{site.waterAccess.source}</span>}
-          />
-        </CardShell>
+    <div className="grid grid-cols-3 gap-4">
 
-        {/* Infrastructure */}
-        <CardShell title="Infrastructure" icon={Zap} iconColor="text-amber-400" link="View details">
-          <Row
-            label="Power availability"
-            value={
-              <span className={`flex items-center gap-1.5 ${availColor(site.infrastructure.powerAvailability)}`}>
-                {availIcon(site.infrastructure.powerAvailability)}
-                {site.infrastructure.powerAvailability}
-              </span>
-            }
-          />
-          <Row label="Fiber" value={<span className="text-xs text-right leading-tight">{site.infrastructure.fiberConnectivity}</span>} />
-          <Row label="Road access" value={<span className="text-xs text-right leading-tight">{site.infrastructure.roadAccess}</span>} />
-        </CardShell>
+      {/* ── 1. Water ── */}
+      <CardShell title="Water" icon={Droplets} iconColor="text-sky-400" link="View details">
+        {w ? (
+          <>
+            <Row label="Availability score" value={<ScoreBadge score={w.summary.availabilityScore} />} />
+            <Row label="Distance to supply" value={w.summary.distanceToInfrastructure} />
+            <Row label="Reliability" value={<RLabel v={w.summary.reliability} good="High" bad="Low" />} />
+          </>
+        ) : NA}
+      </CardShell>
 
-        {/* Regulatory */}
-        <CardShell title="Regulatory" icon={Shield} iconColor="text-violet-400" link="View details">
-          <Row
-            label="Complexity"
-            value={
-              <span className={`flex items-center gap-1.5 ${complexityColor(site.regulatory.complexityLevel)}`}>
-                {complexityIcon(site.regulatory.complexityLevel)}
-                {site.regulatory.complexityLevel}
-              </span>
-            }
-          />
-          <Row label="Agencies" value={`${site.regulatory.agenciesInvolved} involved`} />
-          <Row
-            label="Est. approval"
-            value={
+      {/* ── 2. Power ── */}
+      <CardShell title="Power" icon={Zap} iconColor="text-amber-400" link="View details">
+        {pw ? (
+          <>
+            <Row label="Substation distance" value={pw.summary.distanceToSubstation} />
+            <Row label="Available capacity" value={<span className="text-amber-300 font-medium">{pw.summary.availableCapacityMW} MW</span>} />
+            <Row label="Grid reliability" value={<RLabel v={pw.summary.reliability} good="High" bad="Low" />} />
+          </>
+        ) : NA}
+      </CardShell>
+
+      {/* ── 3. Climate / Cooling Efficiency ── */}
+      <CardShell title="Climate / Cooling" icon={Thermometer} iconColor="text-rose-400" link="View details">
+        {cl ? (
+          <>
+            <Row label="Avg. yearly temp" value={cl.summary.avgYearlyTemp} />
+            <Row label="Peak summer" value={<span className="text-rose-400 font-medium">{cl.summary.peakSummerTemp}</span>} />
+            <Row label="PUE impact" value={<span className="text-[11px] text-right leading-snug text-[#9CA3AF]">{cl.summary.estimatedPUEImpact}</span>} />
+          </>
+        ) : NA}
+      </CardShell>
+
+      {/* ── 4. Connectivity ── */}
+      <CardShell title="Connectivity" icon={Network} iconColor="text-violet-400" link="View details">
+        {co ? (
+          <>
+            <Row label="Distance to backbone" value={co.summary.distanceToBackbone} />
+            <Row
+              label="Fiber providers"
+              value={
+                <span className={
+                  co.summary.fiberProviders >= 2 ? 'text-[#10B981] font-medium' :
+                  co.summary.fiberProviders === 1 ? 'text-amber-400 font-medium' :
+                  'text-red-400 font-medium'
+                }>
+                  {co.summary.fiberProviders === 0 ? 'None' : `${co.summary.fiberProviders} carrier${co.summary.fiberProviders > 1 ? 's' : ''}`}
+                </span>
+              }
+            />
+            <Row label="Redundancy" value={<RLabel v={co.summary.redundancy} good="Yes" bad="No" />} />
+          </>
+        ) : NA}
+      </CardShell>
+
+      {/* ── 5. Land / Topography ── */}
+      <CardShell title="Land / Topography" icon={MapPin} iconColor="text-emerald-400" link="View details">
+        {la ? (
+          <>
+            <Row label="Land price" value={la.summary.landPrice} />
+            <Row label="Available parcel" value={la.summary.parcelSize} />
+            <Row label="Flood risk" value={<RLabel v={la.summary.floodRisk} good="Low" bad="High" />} />
+          </>
+        ) : NA}
+      </CardShell>
+
+      {/* ── 6. Zoning / SEZ ── */}
+      <CardShell title="Zoning / SEZ" icon={Shield} iconColor="text-indigo-400" link="View details">
+        {z ? (
+          <>
+            <Row label="DC permitted" value={<span className={`font-medium ${permitColor(z.summary.dataCenterPermitted)}`}>{z.summary.dataCenterPermitted}</span>} />
+            <Row label="SEZ status" value={<span className="text-[11px] text-right leading-snug text-[#9CA3AF]">{z.summary.sezStatus}</span>} />
+            <Row label="Permitting speed" value={
               <span className="flex items-center gap-1 text-amber-300">
                 <Clock className="w-3 h-3" />
-                {site.regulatory.estApprovalTime}
+                {z.summary.permittingSpeed}
               </span>
-            }
-          />
-        </CardShell>
+            } />
+          </>
+        ) : NA}
+      </CardShell>
 
-        {/* Cooling Impact */}
-        <CardShell title="Cooling Impact" icon={Thermometer} iconColor="text-rose-400" link="Compare technologies">
-          <p className="text-[11px] text-[#6B7280] -mt-1">Additional daily water demand</p>
-          <div className="flex flex-col gap-2 mt-1">
-            {cooling.map((c) => {
-              const pct = maxCooling > 0 ? (parseCoolingValue(c.value) / maxCooling) * 100 : 0;
-              return (
-                <div key={c.label} className="flex flex-col gap-0.5">
-                  <div className="flex justify-between text-[11px]">
-                    <span className="text-[#9CA3AF]">{c.label}</span>
-                    <span className="text-white font-medium">{c.value}</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-[#1F2937] rounded-full overflow-hidden">
-                    <div className="h-full bg-rose-500/70 rounded-full" style={{ width: `${pct}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardShell>
-      </div>
-
-      {/* Right — Nearby Infrastructure (full height) */}
-      <div className="w-[240px] flex-shrink-0">
-        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 h-full flex flex-col">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-[#1F2937] flex items-center justify-center flex-shrink-0">
-              <MapPin className="w-4 h-4 text-[#10B981]" />
-            </div>
-            <span className="text-sm font-semibold text-white">Nearby Infrastructure</span>
-          </div>
-
-          <div className="flex-1 flex flex-col divide-y divide-[#1F2937]">
-            {site.nearbyInfrastructure.map((item, i) => {
-              const Icon = nearbyIcon(item.type);
-              return (
-                <div key={i} className="flex items-start gap-3 py-3">
-                  <div className="w-7 h-7 rounded-lg bg-[#1F2937] flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Icon className="w-3.5 h-3.5 text-[#6B7280]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-medium text-white leading-snug">{item.name}</div>
-                    <div className="text-[11px] text-[#6B7280] mt-0.5">{item.type} · {item.distance}</div>
-                    <span className={`inline-block mt-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${statusColor(item.status)}`}>
-                      {item.status}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <a className="text-[#10B981] text-xs flex items-center gap-1 cursor-pointer hover:underline pt-3 border-t border-[#1F2937] mt-2">
-            View all nearby <ChevronRight className="w-3 h-3" />
-          </a>
-        </div>
-      </div>
     </div>
   );
 }

@@ -164,6 +164,30 @@ export const sites = [
       aiPrediction:
         "Heet Industrial City is on track to consolidate its position as the top-ranked data center site in Saudi Arabia. The Phase 2 TSE expansion arriving in 2026 will increase available water capacity by over 60%, effectively eliminating the site's only current bottleneck. The Riyadh TSE Ring Pipeline extension in 2028 adds a second high-volume supply path, reducing single-source risk to near zero. Power upgrades are funded and contracted. Score is projected to reach 96–97 by 2030, constrained only by the practical ceiling of a mature, well-served industrial site.",
     },
+    water: {
+      summary: { availabilityScore: 94, distanceToInfrastructure: "0.8 km", reliability: "High" },
+      detail: { cost: "SAR 2.10/m3", sustainability: "100% recycled TSE", droughtRisk: "Low" },
+    },
+    power: {
+      summary: { distanceToSubstation: "1.4 km", availableCapacityMW: 180, reliability: "High" },
+      detail: { outageHistory: "0 outages in past 12 months", electricityPrice: "SAR 0.18/kWh", renewableAvailability: "Solar farm 25 km away, 300 MW capacity", expansionPotential: "Substation upgrade to 500 kV funded, delivery 2026" },
+    },
+    climate: {
+      summary: { avgYearlyTemp: "26°C", peakSummerTemp: "44°C", estimatedPUEImpact: "+0.12 PUE penalty vs. temperate climate" },
+      detail: { humidity: "Low — avg 18% RH", extremeHeatDays: 58 },
+    },
+    connectivity: {
+      summary: { distanceToBackbone: "2.1 km", fiberProviders: 2, redundancy: "Yes" },
+      detail: { latencyToMajorCities: "Riyadh: 2ms, Jeddah: 18ms, Dubai: 32ms", proximityToIX: "SAIX Riyadh Internet Exchange — 28 km" },
+    },
+    land: {
+      summary: { landPrice: "SAR 380/m2", parcelSize: "120 hectares available", floodRisk: "Low" },
+      detail: { flatnessSlope: "<0.5% grade — essentially flat", soilStability: "Compact gravel/sand — excellent bearing", roomForExpansion: "Phase 2 plot reserved, 60 ha adjacent", distanceToRoads: "0.2 km to Ring Road 8" },
+    },
+    zoning: {
+      summary: { dataCenterPermitted: "Yes", sezStatus: "MODON Industrial City (streamlined)", permittingSpeed: "4-6 months" },
+      detail: { taxIncentives: "MODON industrial rate; 0% municipal fees for first 5 years", environmentalRestrictions: "None for TSE-based operations", governmentSupport: "MODON single-window; NCA designated priority tenant programme", easeOfPermits: "Easy" },
+    },
   },
   {
     id: "site-002",
@@ -331,6 +355,30 @@ export const sites = [
       ],
       aiPrediction:
         "Al-Khair Industrial City is approaching a step-change in its infrastructure profile. The dual-path fiber upgrade contracted for Q4 2026 resolves the site's most significant current weakness; once delivered, the connectivity score moves from constrained to best-in-class. The Phase 2 TSE expansion adds 70,000 m3/day of additional treated water capacity, and the Eastern Riyadh Desalination Hub in 2027 will provide a high-volume backup supply. Score is projected to reach 90–93 by 2030, closing the gap with Heet meaningfully.",
+    },
+    water: {
+      summary: { availabilityScore: 88, distanceToInfrastructure: "1.2 km", reliability: "High" },
+      detail: { cost: "SAR 2.25/m3", sustainability: "100% TSE + SWCC desalination backup", droughtRisk: "Low" },
+    },
+    power: {
+      summary: { distanceToSubstation: "2.6 km", availableCapacityMW: 140, reliability: "High" },
+      detail: { outageHistory: "1 outage in past 12 months", electricityPrice: "SAR 0.18/kWh", renewableAvailability: "Solar farm 18 km away, 150 MW capacity", expansionPotential: "SEC Riyadh East grid reinforcement programme due 2027" },
+    },
+    climate: {
+      summary: { avgYearlyTemp: "27°C", peakSummerTemp: "44°C", estimatedPUEImpact: "+0.12 PUE penalty vs. temperate climate" },
+      detail: { humidity: "Low — avg 17% RH", extremeHeatDays: 60 },
+    },
+    connectivity: {
+      summary: { distanceToBackbone: "3.5 km", fiberProviders: 1, redundancy: "Partial" },
+      detail: { latencyToMajorCities: "Riyadh: 4ms, Jeddah: 19ms, Dubai: 33ms", proximityToIX: "SAIX Riyadh Internet Exchange — 35 km; dual-path upgrade due Q4 2026" },
+    },
+    land: {
+      summary: { landPrice: "SAR 420/m2", parcelSize: "85 hectares available", floodRisk: "Low" },
+      detail: { flatnessSlope: "<0.8% grade — good for large footprint", soilStability: "Firm sandy loam — suitable for heavy structures", roomForExpansion: "Adjacent industrial plot of 40 ha available", distanceToRoads: "2 km spur road to Eastern Ring Road" },
+    },
+    zoning: {
+      summary: { dataCenterPermitted: "Yes", sezStatus: "MODON Industrial City", permittingSpeed: "6-8 months" },
+      detail: { taxIncentives: "MODON standard industrial tariff", environmentalRestrictions: "CST data sovereignty compliance review required", governmentSupport: "MODON single-window service; CST operating licence mandatory", easeOfPermits: "Easy" },
     },
   },
   {
@@ -506,6 +554,30 @@ export const sites = [
       ],
       aiPrediction:
         "Sudair Industrial City has a solid medium-term trajectory. The Riyadh–Qassim Backbone fiber completion in 2026 upgrades the site's connectivity significantly and feeds directly into the Sudair node; this alone is expected to add 2–3 points to the score. The TSE reservoir and Backbone offtake together address the 3.1 km water connection distance — the site's primary risk factor. By 2030, Sudair is projected to score 86, positioning it as a credible second-tier site behind Heet and Al-Khair.",
+    },
+    water: {
+      summary: { availabilityScore: 76, distanceToInfrastructure: "3.1 km", reliability: "Medium" },
+      detail: { cost: "SAR 2.45/m3", sustainability: "100% TSE — pipeline connection required", droughtRisk: "Medium" },
+    },
+    power: {
+      summary: { distanceToSubstation: "1.9 km", availableCapacityMW: 120, reliability: "High" },
+      detail: { outageHistory: "1 outage in past 12 months", electricityPrice: "SAR 0.18/kWh", renewableAvailability: "Sudair Solar PV Park (1.5 GW) — 8 km away", expansionPotential: "230 kV to 380 kV substation upgrade planned" },
+    },
+    climate: {
+      summary: { avgYearlyTemp: "24°C", peakSummerTemp: "42°C", estimatedPUEImpact: "+0.10 PUE penalty vs. temperate climate" },
+      detail: { humidity: "Very low — avg 14% RH", extremeHeatDays: 48 },
+    },
+    connectivity: {
+      summary: { distanceToBackbone: "5.7 km", fiberProviders: 2, redundancy: "Yes" },
+      detail: { latencyToMajorCities: "Riyadh: 8ms, Jeddah: 22ms, Dubai: 36ms", proximityToIX: "SAIX Riyadh Internet Exchange — 90 km; Backbone direct peering 2026" },
+    },
+    land: {
+      summary: { landPrice: "SAR 290/m2", parcelSize: "200+ hectares available", floodRisk: "Low" },
+      detail: { flatnessSlope: "<1% grade — suitable for large campus", soilStability: "Stable desert gravel — good bearing capacity", roomForExpansion: "Extensive undeveloped land within city boundary", distanceToRoads: "0.4 km to Highway 65" },
+    },
+    zoning: {
+      summary: { dataCenterPermitted: "Yes", sezStatus: "MODON Industrial City", permittingSpeed: "6-9 months" },
+      detail: { taxIncentives: "MODON industrial rate", environmentalRestrictions: "None significant", governmentSupport: "MODON standard service; Sudair designated national tech cluster", easeOfPermits: "Moderate" },
     },
   },
   {
@@ -685,6 +757,30 @@ export const sites = [
       aiPrediction:
         "Dammam 2nd Industrial City's forecast improvement is real but modest — the Eastern Province's infrastructure expansion programme is large and well-funded, but much of it addresses the region's existing industrial base rather than creating new data center headroom. The Jubail Phase 3 desalination expansion in 2027 will ease the water supply pressure, and the subsea cable landing station in 2027 is a major connectivity upgrade. However, water allocation constraints under RCJY and the tighter 95 MW spare power capacity remain partial bottlenecks through 2030.",
     },
+    water: {
+      summary: { availabilityScore: 74, distanceToInfrastructure: "4.5 km", reliability: "Medium" },
+      detail: { cost: "SAR 2.80/m3", sustainability: "80% TSE, 20% SWCC desalination", droughtRisk: "Low" },
+    },
+    power: {
+      summary: { distanceToSubstation: "3.2 km", availableCapacityMW: 95, reliability: "High" },
+      detail: { outageHistory: "2 outages in past 12 months", electricityPrice: "SAR 0.18/kWh", renewableAvailability: "ACWA Power renewable project 30 km, 500 MW", expansionPotential: "RCJY Eastern Province grid expansion programme 2027" },
+    },
+    climate: {
+      summary: { avgYearlyTemp: "28°C", peakSummerTemp: "46°C", estimatedPUEImpact: "+0.15 PUE penalty vs. temperate climate" },
+      detail: { humidity: "High coastal humidity — avg 62% RH in July", extremeHeatDays: 72 },
+    },
+    connectivity: {
+      summary: { distanceToBackbone: "6.8 km", fiberProviders: 2, redundancy: "Partial" },
+      detail: { latencyToMajorCities: "Riyadh: 12ms, Jeddah: 26ms, Dubai: 8ms", proximityToIX: "UAE-IX Dubai reachable at 8ms; subsea cable landing upgrade 2027" },
+    },
+    land: {
+      summary: { landPrice: "SAR 510/m2", parcelSize: "60 hectares available", floodRisk: "Low" },
+      detail: { flatnessSlope: "Flat coastal plain — <0.3% grade", soilStability: "Sandy with sabkha patches — moderate, requires treatment", roomForExpansion: "Limited within current zone boundary", distanceToRoads: "1.2 km to King Fahd Causeway corridor" },
+    },
+    zoning: {
+      summary: { dataCenterPermitted: "Conditional", sezStatus: "RCJY Industrial Zone", permittingSpeed: "8-12 months" },
+      detail: { taxIncentives: "RCJY preferential tariff for Tier 1 industrial consumers", environmentalRestrictions: "Coastal zone EIA required for new construction", governmentSupport: "RCJY Tier 1 fast-track available on application", easeOfPermits: "Moderate" },
+    },
   },
   {
     id: "site-005",
@@ -862,6 +958,30 @@ export const sites = [
       ],
       aiPrediction:
         "Qassim Industrial City's trajectory is meaningful but gated on infrastructure delivery timing. The Riyadh–Qassim Backbone fiber completion in 2026 is the highest-impact near-term event — it solves the connectivity constraint entirely. The SEC substation upgrade to 230 kV in 2028 will roughly triple available power capacity, which is the most important improvement for data center viability. Water remains a structural constraint through at least 2027; the Qassim Integrated TSE Hub in 2028 is the key inflection. Score is projected to reach 71 by 2030, making this a viable site for post-2028 developments.",
+    },
+    water: {
+      summary: { availabilityScore: 58, distanceToInfrastructure: "6.2 km", reliability: "Low" },
+      detail: { cost: "SAR 3.20/m3", sustainability: "100% TSE — capacity severely constrained", droughtRisk: "High" },
+    },
+    power: {
+      summary: { distanceToSubstation: "4.8 km", availableCapacityMW: 75, reliability: "Medium" },
+      detail: { outageHistory: "3 outages in past 12 months", electricityPrice: "SAR 0.20/kWh", renewableAvailability: "Planned solar project 45 km, 200 MW (expected 2027)", expansionPotential: "230 kV upgrade under review — no funding confirmed" },
+    },
+    climate: {
+      summary: { avgYearlyTemp: "25°C", peakSummerTemp: "43°C", estimatedPUEImpact: "+0.11 PUE penalty vs. temperate climate" },
+      detail: { humidity: "Very low — avg 12% RH", extremeHeatDays: 52 },
+    },
+    connectivity: {
+      summary: { distanceToBackbone: "14.2 km", fiberProviders: 1, redundancy: "No" },
+      detail: { latencyToMajorCities: "Riyadh: 18ms, Jeddah: 28ms, Dubai: 42ms", proximityToIX: "SAIX Riyadh Internet Exchange — 280 km; Backbone upgrade expected 2026" },
+    },
+    land: {
+      summary: { landPrice: "SAR 220/m2", parcelSize: "150 hectares available", floodRisk: "Low" },
+      detail: { flatnessSlope: "<0.8% grade — suitable terrain", soilStability: "Desert gravel — good bearing capacity", roomForExpansion: "Large undeveloped zone to the north", distanceToRoads: "1.8 km to Buraydah–Riyadh Highway" },
+    },
+    zoning: {
+      summary: { dataCenterPermitted: "Yes", sezStatus: "MODON Industrial City", permittingSpeed: "8-12 months" },
+      detail: { taxIncentives: "Standard MODON tariff — no DC-specific incentives", environmentalRestrictions: "Water Demand Management Plan mandatory (water stress zone)", governmentSupport: "No dedicated data center facilitation programme", easeOfPermits: "Moderate" },
     },
   },
   {
@@ -1043,6 +1163,30 @@ export const sites = [
       aiPrediction:
         "Jubail 3rd Industrial City's improvement depends almost entirely on the RCJY Phase 3 development programme, a SAR 18B investment that begins substantive delivery from 2028. Until then, the site's infrastructure profile changes minimally — the 2026 score barely moves because the Phase 3 works are in procurement and design. The commercial fiber deployment in 2028 solves the current industrial-only 10 Gbps constraint, and the TSE Phase 3 network brings water availability up from critical to adequate. Score is projected to reach 63 by 2030, but this is highly contingent on RCJY Phase 3 staying on schedule.",
     },
+    water: {
+      summary: { availabilityScore: 52, distanceToInfrastructure: "8.7 km", reliability: "Low" },
+      detail: { cost: "SAR 2.85/m3", sustainability: "90% SWCC desalination, 10% RCJY TSE", droughtRisk: "Low" },
+    },
+    power: {
+      summary: { distanceToSubstation: "6.4 km", availableCapacityMW: 35, reliability: "Medium" },
+      detail: { outageHistory: "2 outages in past 12 months", electricityPrice: "SAR 0.16/kWh", renewableAvailability: "Aramco renewable portfolio 40 km — no direct connection available", expansionPotential: "RCJY Phase 3 dedicated substation planned for 2028" },
+    },
+    climate: {
+      summary: { avgYearlyTemp: "28°C", peakSummerTemp: "46°C", estimatedPUEImpact: "+0.16 PUE penalty vs. temperate climate" },
+      detail: { humidity: "High coastal humidity — avg 65% RH in July", extremeHeatDays: 75 },
+    },
+    connectivity: {
+      summary: { distanceToBackbone: "22.0 km", fiberProviders: 1, redundancy: "No" },
+      detail: { latencyToMajorCities: "Riyadh: 18ms, Jeddah: 30ms, Dubai: 10ms", proximityToIX: "UAE-IX Dubai accessible at 10ms — commercial fiber not yet in Phase 3" },
+    },
+    land: {
+      summary: { landPrice: "SAR 180/m2", parcelSize: "350 hectares available", floodRisk: "Low" },
+      detail: { flatnessSlope: "Very flat coastal plain — <0.2% grade", soilStability: "Requires compaction — salt-affected surface in places", roomForExpansion: "Extensive greenfield within Phase 3 boundary", distanceToRoads: "7 km bypass road (paving funded, due 2026)" },
+    },
+    zoning: {
+      summary: { dataCenterPermitted: "Conditional", sezStatus: "RCJY Industrial Zone (Phase 3)", permittingSpeed: "10-14 months" },
+      detail: { taxIncentives: "RCJY Tier 1 utility discount and land lease rebate", environmentalRestrictions: "Full coastal EIA required; RCJY pre-cleared EIA pathway available", governmentSupport: "RCJY Master Plan designates digital infrastructure precinct in Phase 3", easeOfPermits: "Moderate" },
+    },
   },
   {
     id: "site-007",
@@ -1217,6 +1361,30 @@ export const sites = [
       ],
       aiPrediction:
         "Afif Technology Industrial Zone has limited infrastructure investment planned, and none of the planned investments address the site's fundamental constraints — the SEC grid remains at 33 kV through 2029 with no fiber extension on any current roadmap. The access road paving in 2026 is a positive development for construction logistics, and the regional water treatment upgrade in 2028 improves water access marginally. Score improvement through 2030 is expected to be minimal — 4 points over five years — as the core infrastructure gaps require investments that are not currently funded or planned.",
+    },
+    water: {
+      summary: { availabilityScore: 32, distanceToInfrastructure: "14.3 km", reliability: "Low" },
+      detail: { cost: "SAR 4.80/m3 (primarily trucked)", sustainability: "Fossil aquifer with zero recharge — not sustainable", droughtRisk: "High" },
+    },
+    power: {
+      summary: { distanceToSubstation: "12.0 km", availableCapacityMW: 22, reliability: "Low" },
+      detail: { outageHistory: "6 outages in past 12 months", electricityPrice: "SAR 0.22/kWh", renewableAvailability: "Excellent solar irradiance — no commercial farm within 50 km", expansionPotential: "No funded grid upgrade on record" },
+    },
+    climate: {
+      summary: { avgYearlyTemp: "27°C", peakSummerTemp: "44°C", estimatedPUEImpact: "+0.13 PUE penalty vs. temperate climate" },
+      detail: { humidity: "Very low — avg 10% RH", extremeHeatDays: 55 },
+    },
+    connectivity: {
+      summary: { distanceToBackbone: "38.0 km", fiberProviders: 1, redundancy: "No" },
+      detail: { latencyToMajorCities: "Riyadh: 32ms, Jeddah: 44ms, Dubai: 58ms", proximityToIX: "SAIX Riyadh Internet Exchange — 380 km; no expansion roadmap" },
+    },
+    land: {
+      summary: { landPrice: "SAR 80/m2", parcelSize: "500+ hectares available", floodRisk: "Low" },
+      detail: { flatnessSlope: "<1.5% grade — open desert terrain", soilStability: "Sandy desert — moderate compaction required", roomForExpansion: "Unlimited open land with no competing industrial use", distanceToRoads: "3.5 km unpaved track to nearest paved road" },
+    },
+    zoning: {
+      summary: { dataCenterPermitted: "Conditional", sezStatus: "Not in SEZ", permittingSpeed: "12-18 months" },
+      detail: { taxIncentives: "None specific to data centers", environmentalRestrictions: "Full CEIA required — Category A water stress zone designation", governmentSupport: "No dedicated data center facilitation programme", easeOfPermits: "Difficult" },
     },
   },
   {
@@ -1395,6 +1563,30 @@ export const sites = [
       ],
       aiPrediction:
         "Wadi Al-Dawasir Industrial Park has essentially no meaningful infrastructure investment planned before 2029. The aquifer monitoring study is a diagnostic exercise, not a supply solution, and the NWC Southern Region programme in 2030 is broad and may not reach this specific site in the plan period. The municipal water treatment upgrade arriving in 2029 will improve the water situation marginally, but the site will remain without terrestrial fiber or an adequate power grid for the foreseeable future. Score improvement through 2030 is projected at just 3 points. This site should be revisited only if a dedicated transmission and fiber investment is announced and funded.",
+    },
+    water: {
+      summary: { availabilityScore: 18, distanceToInfrastructure: "No viable supply within 24 km", reliability: "Low" },
+      detail: { cost: "SAR 7.50/m3 (trucked + minimal desal)", sustainability: "Fossil aquifer at 91% depletion — critically unsustainable", droughtRisk: "High" },
+    },
+    power: {
+      summary: { distanceToSubstation: "18.0 km", availableCapacityMW: 12, reliability: "Low" },
+      detail: { outageHistory: "8+ outages in past 12 months", electricityPrice: "SAR 0.24/kWh", renewableAvailability: "Exceptional solar resource — no commercial project within 100 km", expansionPotential: "No funded grid upgrade on record" },
+    },
+    climate: {
+      summary: { avgYearlyTemp: "29°C", peakSummerTemp: "47°C", estimatedPUEImpact: "+0.18 PUE penalty vs. temperate climate" },
+      detail: { humidity: "Extremely low — avg 8% RH", extremeHeatDays: 82 },
+    },
+    connectivity: {
+      summary: { distanceToBackbone: "72.0 km", fiberProviders: 0, redundancy: "No" },
+      detail: { latencyToMajorCities: "Riyadh: 55ms, Jeddah: 48ms, Dubai: 72ms", proximityToIX: "SAIX Riyadh Internet Exchange — 680 km; no fiber roadmap exists" },
+    },
+    land: {
+      summary: { landPrice: "SAR 40/m2", parcelSize: "1,000+ hectares available", floodRisk: "Medium" },
+      detail: { flatnessSlope: "<2% grade with wadi flood channels", soilStability: "Variable — flood-affected alluvial areas present", roomForExpansion: "Vast open land but infrastructure access is the binding constraint", distanceToRoads: "8.5 km to nearest paved road" },
+    },
+    zoning: {
+      summary: { dataCenterPermitted: "Conditional", sezStatus: "Not in SEZ", permittingSpeed: "18-24 months" },
+      detail: { taxIncentives: "None specific to data centers", environmentalRestrictions: "Full Comprehensive EIA (CEIA) mandatory — 6-9 month review", governmentSupport: "No DC facilitation programme — off the national digital infrastructure roadmap", easeOfPermits: "Difficult" },
     },
   },
 ];

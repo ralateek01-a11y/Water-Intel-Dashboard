@@ -1,0 +1,107 @@
+Restructure the site data model and the Overview card grid on the Site
+Detail card (on the Site Finder page) around six dimensions instead of the
+current five sections. For each site in src/data/sites.js, replace or
+reorganize the existing fields into this new structure:
+
+{
+  water: {
+    summary: {
+      availabilityScore: number (0-100),
+      distanceToInfrastructure: string (e.g. "0.8 km"),
+      reliability: "High" | "Medium" | "Low"
+    },
+    detail: {
+      cost: string (e.g. "SAR 2.10/m3"),
+      sustainability: string (e.g. "65% recycled/reused source"),
+      droughtRisk: "Low" | "Medium" | "High"
+    }
+  },
+  power: {
+    summary: {
+      distanceToSubstation: string,
+      availableCapacityMW: number,
+      reliability: "High" | "Medium" | "Low"
+    },
+    detail: {
+      outageHistory: string (e.g. "2 outages in past 12 months"),
+      electricityPrice: string (e.g. "SAR 0.18/kWh"),
+      renewableAvailability: string (e.g. "Solar farm 12 km away, 200MW capacity"),
+      expansionPotential: string
+    }
+  },
+  climate: {
+    summary: {
+      avgYearlyTemp: string (e.g. "28°C"),
+      peakSummerTemp: string (e.g. "45°C"),
+      estimatedPUEImpact: string (e.g. "+0.15 PUE penalty vs. temperate climate")
+    },
+    detail: {
+      humidity: string,
+      extremeHeatDays: number (days per year above a threshold, e.g. "62 days above 40°C")
+    }
+  },
+  connectivity: {
+    summary: {
+      distanceToBackbone: string,
+      fiberProviders: number,
+      redundancy: "Yes" | "No" | "Partial"
+    },
+    detail: {
+      latencyToMajorCities: string (e.g. "Riyadh: 2ms, Jeddah: 18ms"),
+      proximityToIX: string
+    }
+  },
+  land: {
+    summary: {
+      landPrice: string (e.g. "SAR 450/m2"),
+      parcelSize: string (e.g. "85 hectares available"),
+      floodRisk: "Low" | "Medium" | "High"
+    },
+    detail: {
+      flatnessSlope: string,
+      soilStability: string,
+      roomForExpansion: string,
+      distanceToRoads: string
+    }
+  },
+  zoning: {
+    summary: {
+      dataCenterPermitted: "Yes" | "No" | "Conditional",
+      sezStatus: string (e.g. "Not in SEZ" or "Within KAEC SEZ"),
+      permittingSpeed: string (e.g. "4-6 months")
+    },
+    detail: {
+      taxIncentives: string,
+      environmentalRestrictions: string,
+      governmentSupport: string,
+      easeOfPermits: "Easy" | "Moderate" | "Difficult"
+    }
+  }
+}
+
+Populate all fields realistically and consistently across all sites —
+higher-ranked sites (like Heet Industrial City at 92) should show strong
+numbers across most dimensions, lower-ranked sites should show at least
+one or two weak dimensions that explain their lower rank (e.g. a site might
+have excellent water and power but poor zoning/permitting speed, which is
+why it's not top-ranked).
+
+Migrate any data you already have in the old waterAccess, infrastructure,
+regulatory, and coolingImpact fields into this new structure rather than
+duplicating it — merge, don't just add alongside.
+
+Now rebuild the Overview card grid to show SIX cards instead of five:
+Water, Power, Climate / Cooling Efficiency, Connectivity, Land /
+Topography, Zoning / SEZ. Arrange as a responsive grid (3 columns on
+desktop, stacking on smaller screens). Each card shows:
+- An icon + the dimension name as the header
+- Only the "summary" fields for that dimension (2-3 data points), styled
+  the same way the existing cards are today (labeled rows, colored
+  status/badge where relevant)
+- A "View Details" link at the bottom
+
+Remove the old "Nearby Infrastructure" card from this grid — fold its
+content into the Power and Connectivity cards' detail views instead
+(nearby substations belong under Power detail, nearby fiber hubs under
+Connectivity detail), since those are the two dimensions it was really
+supporting.
