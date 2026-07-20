@@ -1,0 +1,63 @@
+Rebuild the "AI Chat Assistant" page (replacing the simpler version from
+Phase 6) to look and feel like ChatGPT:
+
+Layout:
+1. Main chat area (center, max-width ~800px, centered):
+   - When there are no messages yet, show a centered welcome state: a large
+     friendly heading like "How can I help with your site selection today?"
+     and the message input below it
+   - Once messages exist, standard chat layout: user messages right-aligned
+     or in a distinct bubble style, assistant messages left-aligned with a
+     small AI/droplet icon, scrollable message history, input bar pinned
+     to the bottom with a send button
+   - Support markdown rendering in assistant responses (use react-markdown)
+     since responses may include lists, bold text, or simple tables
+   - Show a typing/streaming indicator while waiting for a response
+
+2. Right sidebar (collapsible, ~280px wide) titled "Suggested Prompts"
+   with clickable prompt cards that, when clicked, populate the input (or
+   send immediately — your choice, sending immediately feels more like a
+   quick-start). Include these exact suggested prompts, grouped under small
+   headers:
+
+   "Site Analysis"
+   - "Can Riyadh support a new 150 MW data center?"
+   - "Compare Sudair and Heet."
+   - "Which site has the lowest approval complexity?"
+
+   "Regulatory"
+   - "Which regulations apply to this project?"
+   - "Summarize all desalination projects."
+
+   "Documents"
+   - "Translate this Arabic report."
+
+   Also show the currently active project (if one is selected — add a
+   simple project selector dropdown at the top of the sidebar, pulling
+   from src/data/projects.js) so the assistant knows which project's
+   context to use.
+
+3. Backend: build (or extend from Phase 6) an Express route that takes the
+   conversation history and the selected project ID, and calls the
+   Anthropic API (model "claude-sonnet-4-6") with a system prompt like:
+
+   "You are a water infrastructure and data center site-selection assistant
+   for Saudi Arabia. You have access to the following data: [inject the
+   full site list from sites.js, the water infrastructure list from
+   waterInfrastructure.js, the data centers list from dataCenters.js, and
+   the currently selected project's full details from projects.js as
+   JSON]. Answer questions using this data — cite specific numbers,
+   site names, and scores where relevant. If asked to compare sites, use
+   a clear structured comparison. If asked something outside this data,
+   say so honestly rather than making up numbers. Keep answers concise
+   and professional."
+
+   Pass the full conversation history on each request (not just the latest
+   message) so the assistant has context across turns.
+
+4. Store the conversation in React state so it persists while navigating
+   the chat page, but doesn't need to persist across page reloads yet.
+
+Make sure the visual style matches the rest of the app (dark theme, green
+accents) rather than copying ChatGPT's light theme — "ChatGPT-style" here
+means the layout and interaction pattern, not the color scheme.

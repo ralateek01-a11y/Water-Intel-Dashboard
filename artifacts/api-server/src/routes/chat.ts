@@ -10,9 +10,14 @@ router.post("/chat", async (req: Request, res: Response) => {
     return;
   }
 
-  const { messages, siteData } = req.body as {
+  const { messages, context } = req.body as {
     messages: { role: "user" | "assistant"; content: string }[];
-    siteData: Record<string, unknown> | null;
+    context: {
+      sites: unknown[];
+      waterInfrastructure: unknown[];
+      dataCenters: unknown[];
+      selectedProject: Record<string, unknown> | null;
+    };
   };
 
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -22,17 +27,28 @@ router.post("/chat", async (req: Request, res: Response) => {
 
   const anthropic = new Anthropic({ apiKey });
 
-  const siteContext = siteData
-    ? `\n\nCurrently selected site data (JSON):\n${JSON.stringify(siteData, null, 2)}`
-    : "\n\nNo site is currently selected.";
+  const ctx = context ?? { sites: [], waterInfrastructure: [], dataCenters: [], selectedProject: null };
+
+  const dataBlock = [
+    `CANDIDATE SITES (${ctx.sites.length} sites):\n${JSON.stringify(ctx.sites, null, 2)}`,
+    `WATER INFRASTRUCTURE (${ctx.waterInfrastructure.length} items):\n${JSON.stringify(ctx.waterInfrastructure, null, 2)}`,
+    `DATA CENTERS (${ctx.dataCenters.length} items):\n${JSON.stringify(ctx.dataCenters, null, 2)}`,
+    ctx.selectedProject
+      ? `CURRENT PROJECT:\n${JSON.stringify(ctx.selectedProject, null, 2)}`
+      : "No project currently selected.",
+  ].join("\n\n");
 
   const system =
-    "You are a water infrastructure and data center site-selection expert for Saudi Arabia. " +
-    "Answer questions about the currently selected site using the provided data. " +
-    "Be concise and specific, citing exact numbers from the data when relevant. " +
-    "When the user asks about scores, approval timelines, water capacity, cooling costs, " +
-    "or infrastructure availability, always refer to the actual values in the site JSON." +
-    siteContext;
+    "You are a water infrastructure and data center site-selection assistant for Saudi Arabia. " +
+    "You have access to the following data:\n\n" +
+    dataBlock +
+    "\n\n" +
+    "Rules:\n" +
+    "- Answer questions using this data. Cite specific numbers, site names, scores, and capacities where relevant.\n" +
+    "- If asked to compare sites, produce a clear structured comparison (use a markdown table if it helps).\n" +
+    "- If the user asks something outside the provided data, say so honestly — do not invent numbers.\n" +
+    "- When referencing water infrastructure or data centers, use the exact names from the data.\n" +
+    "- Keep answers concise and professional. Use markdown formatting — bullet lists, bold, and tables — where it improves clarity.";
 
   // SSE headers
   res.setHeader("Content-Type", "text/event-stream");
