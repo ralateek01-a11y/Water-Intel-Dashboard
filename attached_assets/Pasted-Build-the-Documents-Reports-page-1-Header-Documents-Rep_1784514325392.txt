@@ -1,0 +1,44 @@
+Build the "Documents & Reports" page.
+
+1. Header: "Documents & Reports" title, subtitle "Your AI-powered document
+   library", search bar, and filter dropdowns (Document Type: Regulation /
+   Government Report / Environmental Study / Tender Document; Agency;
+   Date Range).
+
+2. An "Upload Document" button (filled green) that opens a file picker
+   accepting PDFs.
+
+3. On upload, send the PDF to a backend endpoint. Build a simple Express
+   route that:
+   - Accepts the PDF file
+   - Extracts its text (use a library like pdf-parse)
+   - Sends the extracted text to the Anthropic API (model
+     "claude-sonnet-4-6") with a system prompt instructing it to return
+     ONLY valid JSON with these fields: summary (2-3 sentences), keyNumbers
+     (array of strings, e.g. capacities/budgets/percentages found in the
+     doc), agenciesMentioned (array of strings), locationsMentioned (array
+     of strings), datesMentioned (array of strings), waterCapacities (array
+     of strings, any m3/day or similar figures found), suggestedTags
+     (array of 3-5 short tags)
+   - Parse the JSON response (strip markdown code fences if present) and
+     store it alongside the original filename in a documents list (local
+     state is fine for now, no database needed yet)
+
+4. Display uploaded documents as cards in a grid, each showing:
+   - Document name (bold, header)
+   - A row of checkmarked items: "Summary", "Water Capacity", "Projects
+     Mentioned", plus one specific extracted item shown inline (e.g. if
+     locationsMentioned includes "Riyadh Expansion", show it as a checked
+     line item like in this example: "✓ Riyadh Expansion")
+   - AI-generated tags as small pills below
+   - A "Download PDF" link/button
+   - Clicking the card expands it (or opens a modal) to show the full
+     summary, all key numbers, all agencies, all locations, and all dates
+     extracted
+
+5. Make sure to store the Anthropic API key as a Replit secret
+   (ANTHROPIC_API_KEY) and never expose it in frontend code — all AI calls
+   go through your backend route.
+
+Handle the loading state clearly: show a "Analyzing document..." state
+while the PDF is being processed, since this will take a few seconds.
