@@ -1,0 +1,65 @@
+Create a mock data file at src/data/projects.js exporting an array of
+project objects with this shape:
+
+{
+  id: string,
+  name: string,
+  status: "active" | "planning" | "on-hold" | "completed",
+  powerMW: number,
+  coolingTechnology: string,
+  region: string,
+  targetYear: number,
+  recommendedSiteIds: string[] (references ids from sites.js),
+  notes: [{ id: string, author: string, date: string, text: string }],
+  documents: [{ id: string, name: string, type: string, uploadDate: string }],
+  aiRecommendations: [{ id: string, text: string, confidence: "High" | "Medium" | "Low" }]
+}
+
+Populate it with 3 projects matching this data: "Riyadh DC Campus" (120 MW,
+Immersion Cooling, Riyadh region), "NEOM AI Cluster" (300 MW, Riyadh region
+or NEOM region — you decide a reasonable cooling technology), "Dammam Edge
+Data Center" (60 MW, Eastern region). Give each 2-3 notes, 2-3 documents,
+and 2-3 AI recommendations with realistic-sounding text related to water
+access and site selection.
+
+Now build the "Projects" page (replacing the current placeholder for that
+nav item):
+
+1. Header: "Projects" title, subtitle "Manage your data center site
+   selection projects", and a "+ New Project" button (filled green, top
+   right) that opens a modal with a form: Project Name, Power Requirement
+   (MW), Cooling Technology (dropdown), Region (dropdown), Target Year —
+   on submit, add it to the projects list in local state (no backend
+   persistence needed yet).
+
+2. Below the header, a grid or list of project cards. Each card shows:
+   - A checkmark icon (green) + project name (bold)
+   - Power requirement (e.g. "120 MW")
+   - Cooling technology as a small pill/badge
+   - Status badge (colored by status)
+   - Number of recommended sites and top site score, if any
+
+3. Clicking a project card navigates to a project detail view (can be the
+   same page with a "back to projects" link, or a route like /projects/:id
+   if you're using react-router — install react-router-dom if not already
+   present).
+
+4. Project detail view has its own tab bar: Overview | Site Recommendations
+   | Documents | Reports | Notes | AI Recommendations
+
+   - Overview tab: shows all the project's basic fields in an editable-looking
+     form layout (editing doesn't need to persist yet, just be visually
+     present), plus a summary stat row (power, cooling tech, region, target
+     year, number of sites under consideration)
+   - Site Recommendations tab: reuse the same ranked-site-list component
+     style from the Site Finder page, but filtered to only this project's
+     recommendedSiteIds, pulling full site data from sites.js
+   - Documents tab: list of the project's documents with name, type icon,
+     upload date, and a download-style button (non-functional is fine)
+   - Reports tab: placeholder "No reports generated yet" with a
+     "Generate Report" button (non-functional for now)
+   - Notes tab: list of notes (author, date, text) in a simple comment-thread
+     style, plus a text input at the bottom to add a new note to local state
+   - AI Recommendations tab: list of aiRecommendations, each shown as a card
+     with the recommendation text and a confidence badge (green/amber/red
+     for High/Medium/Low)

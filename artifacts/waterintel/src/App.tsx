@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { sites, getSiteById, getSitesSortedByScore } from './data/sites.js';
+import { projects as initialProjects } from './data/projects.js';
 import { SiteMap } from './components/SiteMap';
 import { SiteDetail } from './components/SiteDetail';
 import { AIChatPage } from './components/AIChatPage';
+import { ProjectsPage, type Project } from './components/ProjectsPage';
+import { ProjectDetail } from './components/ProjectDetail';
 import { 
   Droplet, 
   LayoutDashboard, 
@@ -21,7 +24,7 @@ import {
   Bell
 } from 'lucide-react';
 
-type Page = 'site-finder' | 'ai-chat';
+type Page = 'site-finder' | 'ai-chat' | 'projects' | 'project-detail';
 
 function Shell() {
   const sortedSites = getSitesSortedByScore();
@@ -32,6 +35,28 @@ function Shell() {
   const [powerFilter, setPowerFilter] = useState('Any Capacity');
   const [coolingFilter, setCoolingFilter] = useState('All Technologies');
 
+  // Projects state
+  const [projects, setProjects] = useState<Project[]>(initialProjects as Project[]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const selectedProject = projects.find((p) => p.id === selectedProjectId) ?? null;
+
+  function handleAddProject(p: Project) {
+    setProjects((prev) => [...prev, p]);
+  }
+
+  function handleSelectProject(id: string) {
+    setSelectedProjectId(id);
+    setActivePage('project-detail');
+  }
+
+  function handleUpdateNotes(projectId: string, note: { id: string; author: string; date: string; text: string }) {
+    setProjects((prev) =>
+      prev.map((p) =>
+        p.id === projectId ? { ...p, notes: [...p.notes, note] } : p
+      )
+    );
+  }
+
   const getScoreColors = (score: number) => {
     if (score >= 80) return { bg: 'bg-[#10B981]/20', text: 'text-[#10B981]', border: 'border-[#10B981]/30', stroke: '#10B981' };
     if (score >= 60) return { bg: 'bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500/30', stroke: '#F59E0B' };
@@ -40,16 +65,16 @@ function Shell() {
 
   // Navigation — items with optional page key; anything without one keeps current page
   const navItems: { icon: React.ComponentType<React.SVGProps<SVGSVGElement>>; label: string; page?: Page }[] = [
-    { icon: LayoutDashboard, label: 'Dashboard', page: 'site-finder' },
-    { icon: FolderOpen, label: 'Projects' },
-    { icon: MapPin, label: 'Site Finder', page: 'site-finder' },
-    { icon: Workflow, label: 'Water Infrastructure' },
-    { icon: Server, label: 'Data Centers' },
-    { icon: FileText, label: 'Documents & Reports' },
-    { icon: MessageSquare, label: 'AI Chat Assistant', page: 'ai-chat' },
-    { icon: BookOpen, label: 'Regulatory Guide' },
-    { icon: SlidersHorizontal, label: 'Compare Sites' },
-    { icon: BarChart3, label: 'Reports' },
+    { icon: LayoutDashboard, label: 'Dashboard',         page: 'site-finder' },
+    { icon: FolderOpen,      label: 'Projects',          page: 'projects'    },
+    { icon: MapPin,          label: 'Site Finder',       page: 'site-finder' },
+    { icon: Workflow,        label: 'Water Infrastructure'                    },
+    { icon: Server,          label: 'Data Centers'                           },
+    { icon: FileText,        label: 'Documents & Reports'                    },
+    { icon: MessageSquare,   label: 'AI Chat Assistant', page: 'ai-chat'     },
+    { icon: BookOpen,        label: 'Regulatory Guide'                       },
+    { icon: SlidersHorizontal, label: 'Compare Sites'                        },
+    { icon: BarChart3,       label: 'Reports'                                },
   ];
 
   return (
@@ -196,6 +221,24 @@ function Shell() {
           {/* ── AI Chat Page ── */}
           {activePage === 'ai-chat' && (
             <AIChatPage selectedSite={selectedSite} />
+          )}
+
+          {/* ── Projects List Page ── */}
+          {activePage === 'projects' && (
+            <ProjectsPage
+              projects={projects}
+              onAddProject={handleAddProject}
+              onSelectProject={handleSelectProject}
+            />
+          )}
+
+          {/* ── Project Detail Page ── */}
+          {activePage === 'project-detail' && selectedProject && (
+            <ProjectDetail
+              project={selectedProject}
+              onBack={() => setActivePage('projects')}
+              onUpdateNotes={handleUpdateNotes}
+            />
           )}
 
           {/* ── Site Finder Page ── */}
