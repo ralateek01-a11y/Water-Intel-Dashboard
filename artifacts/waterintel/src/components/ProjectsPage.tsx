@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   CheckCircle2, Clock, PauseCircle, CheckSquare,
   Zap, Thermometer, Plus, X, ChevronRight,
   MapPin, Star
 } from 'lucide-react';
 import { getSiteById } from '../data/sites.js';
+import { useProjects } from '../context/ProjectsContext';
 
 interface Note {
   id: string;
@@ -56,7 +58,9 @@ const COOLING_OPTIONS = [
 ];
 const REGION_OPTIONS = ['Riyadh', 'Eastern', 'Qassim', 'Makkah', 'Madinah', 'NEOM'];
 
-export function ProjectsPage({ projects, onAddProject, onSelectProject }: ProjectsPageProps) {
+export function ProjectsPage() {
+  const navigate = useNavigate();
+  const { projects, addProject } = useProjects();
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({
     name: '',
@@ -87,7 +91,7 @@ export function ProjectsPage({ projects, onAddProject, onSelectProject }: Projec
       documents: [],
       aiRecommendations: [],
     };
-    onAddProject(newProject);
+    addProject(newProject);
     setShowModal(false);
     setForm({ name: '', powerMW: '', coolingTechnology: COOLING_OPTIONS[0], region: REGION_OPTIONS[0], targetYear: '2027' });
     setFormError('');
@@ -133,7 +137,7 @@ export function ProjectsPage({ projects, onAddProject, onSelectProject }: Projec
               return (
                 <div
                   key={project.id}
-                  onClick={() => onSelectProject(project.id)}
+                  onClick={() => navigate(`/projects/${project.id}`)}
                   className="bg-[#111827] border border-[#1F2937] hover:border-[#10B981]/40 rounded-xl p-5 cursor-pointer transition-all group"
                 >
                   {/* Top row */}

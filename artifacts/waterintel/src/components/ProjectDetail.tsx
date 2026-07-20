@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, CheckCircle2, Clock, PauseCircle, CheckSquare,
   Zap, Thermometer, MapPin, Calendar, LayoutGrid, Star,
@@ -6,6 +7,7 @@ import {
   FileSpreadsheet, FileType, Send, AlertCircle
 } from 'lucide-react';
 import { getSiteById } from '../data/sites.js';
+import { useProjects } from '../context/ProjectsContext';
 import type { Project } from './ProjectsPage';
 
 type DetailTab = 'overview' | 'sites' | 'documents' | 'reports' | 'notes' | 'ai';
@@ -30,15 +32,23 @@ function fileTypeIcon(type: string) {
   return <FileText className="w-4 h-4 text-red-400" />;
 }
 
-interface ProjectDetailProps {
-  project: Project;
-  onBack: () => void;
-  onUpdateNotes: (projectId: string, note: { id: string; author: string; date: string; text: string }) => void;
-}
+export function ProjectDetail() {
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const { projects, addNote } = useProjects();
+  const project = projects.find((p) => p.id === id);
 
-export function ProjectDetail({ project, onBack, onUpdateNotes }: ProjectDetailProps) {
   const [activeTab, setActiveTab] = useState<DetailTab>('overview');
   const [noteText, setNoteText] = useState('');
+
+  if (!project) {
+    return (
+      <div className="flex-1 flex items-center justify-center text-[#6B7280]">
+        Project not found.{' '}
+        <button onClick={() => navigate('/projects')} className="text-[#10B981] ml-1 hover:underline">Back to Projects</button>
+      </div>
+    );
+  }
 
   const sc = STATUS_CONFIG[project.status];
   const StatusIcon = sc.Icon;
@@ -62,7 +72,7 @@ export function ProjectDetail({ project, onBack, onUpdateNotes }: ProjectDetailP
   function submitNote() {
     const text = noteText.trim();
     if (!text) return;
-    onUpdateNotes(project.id, {
+    addNote(project.id, {
       id: `note-${Date.now()}`,
       author: 'Razan Alateeb',
       date: new Date().toISOString().split('T')[0],
@@ -79,7 +89,7 @@ export function ProjectDetail({ project, onBack, onUpdateNotes }: ProjectDetailP
       {/* Header */}
       <div className="flex-shrink-0 px-6 pt-5 pb-4">
         <button
-          onClick={onBack}
+          onClick={() => navigate('/projects')}
           className="flex items-center gap-1.5 text-[#6B7280] hover:text-white text-[12px] mb-4 transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />

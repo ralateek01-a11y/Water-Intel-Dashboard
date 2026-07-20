@@ -1,0 +1,42 @@
+Right now clicking "Dashboard" in the sidebar shows the same content as
+"Site Finder" — they're not properly separated. Fix this:
+
+1. If you're not already using react-router-dom, install it and set up
+   proper routes: "/" or "/dashboard" for Dashboard, "/site-finder" for
+   Site Finder, "/projects" for Projects, etc. Each sidebar nav item should
+   link to its own route using <Link> or navigate(), and the active/highlighted
+   nav state should be based on the current route, not a shared piece of state.
+
+2. Build a distinct "Dashboard" page — this should be a high-level overview,
+   NOT the site-ranking tool. Include:
+
+   - A welcome header: "Welcome back, Razan" with today's date
+   - A row of summary stat cards pulled from existing mock data across the
+     app: "Active Projects" (count from projects.js), "Sites Analyzed"
+     (count from sites.js), "Avg. Site Score" (average overallScore across
+     sites.js), "Documents Processed" (count from documents, once that
+     exists)
+   - A "Current Project" spotlight card (larger version of the sidebar
+     summary) showing the active project's full details and its top 3
+     recommended sites with scores
+   - A "Recent Activity" list — a simple feed of recent actions (can be
+     mock/static entries like "New site analysis completed for Al-Khair
+     Industrial City", "Document uploaded: National Water Strategy 2030",
+     with relative timestamps like "2 hours ago")
+   - Quick-action buttons/cards linking to Site Finder, Projects, and
+     AI Chat Assistant ("Start a new site search", "Create a project",
+     "Ask the AI assistant")
+
+3. Move the current "Tell us about your project" form + ranked list + map
+   + score panel (everything currently shown under Dashboard) so it lives
+   ONLY at the Site Finder route. Dashboard should not contain the site
+   search form or ranked list at all.
+
+4. Double check every other sidebar item (Projects, Water Infrastructure,
+   Data Centers, Documents & Reports, AI Chat Assistant) is also wired to
+   its own distinct route and not accidentally sharing content with another
+   tab.
+
+Do not change the internal layout/functionality of the Site Finder page
+itself — only fix the routing so it lives at its own URL and Dashboard
+gets its own separate content.
