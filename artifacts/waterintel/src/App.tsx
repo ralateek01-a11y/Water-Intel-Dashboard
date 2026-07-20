@@ -27,11 +27,11 @@ import {
   Bell
 } from 'lucide-react';
 
-type Page = 'site-finder' | 'ai-chat' | 'projects' | 'project-detail' | 'water-infrastructure' | 'data-centers' | 'documents';
+type Page = 'dashboard' | 'site-finder' | 'ai-chat' | 'projects' | 'project-detail' | 'water-infrastructure' | 'data-centers' | 'documents';
 
 function Shell() {
   const sortedSites = getSitesSortedByScore();
-  const [activePage, setActivePage] = useState<Page>('site-finder');
+  const [activePage, setActivePage] = useState<Page>('dashboard');
   const [selectedSiteId, setSelectedSiteId] = useState(sortedSites[0]?.id);
   const [chatPreFill,    setChatPreFill]    = useState<string>('');
   const selectedSite = getSiteById(selectedSiteId);
@@ -91,8 +91,9 @@ function Shell() {
     }, 800);
   }
 
-  // The list shown in the ranked panel
-  const displayedSites = finderHasRun ? finderResults : sortedSites;
+  // The list shown in the ranked panel.
+  // Dashboard always shows unfiltered default ranking; Site Finder shows filtered results after a run.
+  const displayedSites = (activePage === 'site-finder' && finderHasRun) ? finderResults : sortedSites;
 
   // Projects state
   const [projects, setProjects] = useState<Project[]>(initialProjects as Project[]);
@@ -124,7 +125,7 @@ function Shell() {
 
   // Navigation — items with optional page key; anything without one keeps current page
   const navItems: { icon: React.ComponentType<React.SVGProps<SVGSVGElement>>; label: string; page?: Page }[] = [
-    { icon: LayoutDashboard, label: 'Dashboard',         page: 'site-finder' },
+    { icon: LayoutDashboard, label: 'Dashboard',         page: 'dashboard'   },
     { icon: FolderOpen,      label: 'Projects',          page: 'projects'    },
     { icon: MapPin,          label: 'Site Finder',       page: 'site-finder' },
     { icon: Workflow,        label: 'Water Infrastructure', page: 'water-infrastructure' },
@@ -315,16 +316,22 @@ function Shell() {
             />
           )}
 
-          {/* ── Site Finder Page ── */}
-          {activePage === 'site-finder' && <>
+          {/* ── Dashboard + Site Finder Pages ── */}
+          {(activePage === 'dashboard' || activePage === 'site-finder') && <>
 
           {/* Header row — fixed, never scrolls */}
           <div className="flex-shrink-0 px-6 pt-6 pb-4 flex w-full justify-between items-end">
             <div>
-              <h1 className="text-white text-[20px] font-bold">Site Finder</h1>
-              <p className="text-[#6B7280] text-[13px] mt-1">
-                Find the best data center sites based on water availability and infrastructure readiness.
-              </p>
+              {activePage === 'dashboard' ? (
+                <h1 className="text-white text-[20px] font-bold">Dashboard</h1>
+              ) : (
+                <>
+                  <h1 className="text-white text-[20px] font-bold">Site Finder</h1>
+                  <p className="text-[#6B7280] text-[13px] mt-1">
+                    Find the best data center sites based on water availability and infrastructure readiness.
+                  </p>
+                </>
+              )}
             </div>
             <div className="flex gap-3">
               <button
@@ -345,7 +352,8 @@ function Shell() {
           {/* Scrollable body — form + map row + detail card */}
           <div className="flex-1 overflow-y-auto">
 
-            {/* ── "Tell us about your project" form ── */}
+            {/* ── "Tell us about your project" form — Site Finder only ── */}
+            {activePage === 'site-finder' && (
             <div className="px-6 pt-2 pb-4">
               <div className="bg-[#111827] border border-[#1F2937] rounded-xl px-5 py-4">
                 <div className="flex items-center justify-between mb-3">
@@ -454,6 +462,7 @@ function Shell() {
                 </div>
               </div>
             </div>
+            )}
 
             {/* Three-column row — fixed height */}
             <div className="h-[420px] flex-shrink-0 px-6 pt-1 pb-4 flex gap-4">
@@ -463,7 +472,7 @@ function Shell() {
                 <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4 h-full flex flex-col">
                   <div className="flex items-center gap-2 mb-4">
                     <h2 className="text-sm font-semibold text-white">
-                      {finderHasRun ? 'Matched Sites' : 'Top Ranked Sites'}
+                      {activePage === 'site-finder' && finderHasRun ? 'Matched Sites' : 'Top Ranked Sites'}
                     </h2>
                     <span className="bg-[#1F2937] text-[#9CA3AF] rounded-full px-2 py-0.5 text-[10px] font-medium leading-tight">
                       {finderLoading ? '…' : `${displayedSites.length} site${displayedSites.length !== 1 ? 's' : ''}`}

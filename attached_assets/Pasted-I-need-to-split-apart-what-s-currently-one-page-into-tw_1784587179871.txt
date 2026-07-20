@@ -1,0 +1,41 @@
+I need to split apart what's currently one page into two, without losing
+any of the existing map/list/score panel functionality. Right now the
+Dashboard route shows a "Site Finder" title, subtitle, the "Tell us about
+your project" input form, the Top Ranked Sites list, the map, and the Site
+Suitability Score panel all together. Change this to:
+
+1. Confirm (or set up, if not already using react-router-dom) that
+   "Dashboard" and "Site Finder" are two separate routes/components.
+
+2. On the DASHBOARD route: remove ONLY the "Site Finder" page title/subtitle
+   ("Find the best data center sites based on water availability and
+   infrastructure readiness.") and the entire "Tell us about your project"
+   input form card (Region, Power, Cooling Technology, Timeline, Budget,
+   "Find Sites" button). Do NOT remove or change anything else — the Top
+   Ranked Sites list, the map with its layer toggles and legend, and the
+   Site Suitability Score panel must remain on the Dashboard exactly as
+   they look and behave today, using whatever default/unfiltered ranking
+   they currently show. Also keep the Site Detail card and its tabs below,
+   unchanged.
+
+   You can add a simple neutral header in place of the removed "Site
+   Finder" title if the page needs one — something like "Dashboard" or
+   "Overview" — but don't add back any of the input form fields here.
+
+3. Create the SITE FINDER route as a new page containing: the "Site
+   Finder" title and subtitle, and the "Tell us about your project" input
+   form (Region, Power, Cooling Technology, Timeline, Budget, "Find Sites"
+   button) exactly as it exists today. When "Find Sites" is clicked, this
+   page should show its own Top Ranked Sites list, map, Site Suitability
+   Score panel, and Site Detail card with tabs — reuse the same components
+   that already exist on Dashboard rather than rebuilding them, just feed
+   them the filtered/scored results based on the form inputs (same
+   filtering/scoring logic already built in Phase 8).
+
+4. Make sure the sidebar nav highlights "Dashboard" only when on the
+   Dashboard route and "Site Finder" only when on the Site Finder route.
+
+Net result: both pages will look very similar (ranked list + map + score
+panel + detail tabs), but only Site Finder has the input form above that
+content, and only Site Finder shows results tailored to specific inputs —
+Dashboard shows the general/default ranked view.
