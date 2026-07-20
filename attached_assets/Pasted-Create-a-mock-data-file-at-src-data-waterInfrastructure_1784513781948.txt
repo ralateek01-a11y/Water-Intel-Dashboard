@@ -1,0 +1,58 @@
+Create a mock data file at src/data/waterInfrastructure.js exporting an
+array of infrastructure objects:
+
+{
+  id: string,
+  name: string,
+  type: "wastewater_treatment" | "desalination" | "pipeline" | "reservoir" | "planned",
+  coordinates: { lat: number, lng: number },
+  capacity: string (e.g. "85,000 m3/day"),
+  status: "Operational" | "Under Construction" | "Planned",
+  operator: string (e.g. "NWC", "SWCC"),
+  connectedTSENetwork: string[] (names of connected pipelines/networks),
+  nearbyDataCenters: string[] (names, can reference dataCenters.js once
+    that exists in Phase 10 — for now just use placeholder names),
+  governmentReports: [{ name: string, date: string }]
+}
+
+Populate with 15-20 realistic items across Riyadh, Eastern, and Qassim
+regions: a mix of wastewater treatment plants (include "Heet Wastewater
+Plant" with 85,000 m3/day, Operational, NWC), desalination plants, pipeline
+segments, reservoirs, and a few planned/future items.
+
+Build the "Water Infrastructure" page as a full-page map (this is the
+primary content, unlike Site Finder where the map was one section among
+several):
+
+1. Full-width/height Leaflet map (reuse the dark CartoDB tile style from
+   Phase 4), centered on Saudi Arabia showing the Riyadh/Eastern/Qassim
+   regions, showing a marker for every item in waterInfrastructure.js
+
+2. Marker colors and icons by type, matching this legend:
+   - Green = Wastewater Treatment Plants
+   - Blue = Desalination Plants
+   - Orange = Pipelines (render as lines/polylines if you have coordinate
+     paths, otherwise as point markers along the route)
+   - Purple = Reservoirs
+   - Gray/black = Planned Infrastructure
+
+3. A filter panel (floating card, top-left or top-right of the map) with
+   checkboxes: "Show only desalination plants", "Show only TSE/wastewater
+   plants", "Planned projects only", "Operational projects only" — these
+   should actually filter which markers are visible on the map, not just
+   be decorative.
+
+4. Clicking a marker opens a side panel (slide in from the right, or a
+   fixed right-hand panel that updates) showing:
+   - Item name (header)
+   - Capacity
+   - Status (colored badge)
+   - Operator
+   - "Connected TSE Network" list
+   - "Nearby Data Centers" list
+   - "Government Reports" list with report names and dates, each as a
+     clickable row (non-functional link is fine for now)
+
+This page should feel distinctly different from Site Finder — it's an
+infrastructure explorer, not a site-recommendation tool. Don't reuse the
+Site Finder layout; build this as its own map-first page.
