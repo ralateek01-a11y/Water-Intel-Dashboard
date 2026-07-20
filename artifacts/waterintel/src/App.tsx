@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { sites, getSiteById, getSitesSortedByScore } from './data/sites.js';
+import { SiteMap } from './components/SiteMap';
+import { SiteDetail } from './components/SiteDetail';
 import { 
   Droplet, 
   LayoutDashboard, 
@@ -180,53 +182,55 @@ function Shell() {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 bg-[#0A0E17] overflow-y-auto">
-          <div className="p-6">
-            {/* Header row */}
-            <div className="flex w-full justify-between items-end mb-6">
-              <div>
-                <h1 className="text-white text-[20px] font-bold">Site Finder</h1>
-                <p className="text-[#6B7280] text-[13px] mt-1">
-                  Find the best data center sites based on water availability and infrastructure readiness.
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button 
-                  className="border border-[#1F2937] bg-transparent text-[#D1D5DB] hover:bg-[#1F2937]/50 rounded-md px-4 py-2 text-sm transition-colors"
-                  data-testid="button-new-project"
-                >
-                  New Project
-                </button>
-                <button 
-                  className="bg-[#10B981] text-white hover:bg-[#059669] rounded-md px-4 py-2 text-sm transition-colors"
-                  data-testid="button-add-custom-site"
-                >
-                  + Add Custom Site
-                </button>
-              </div>
-            </div>
+        <div className="flex-1 bg-[#0A0E17] flex flex-col overflow-hidden">
 
-            {/* Two-column layout */}
-            <div className="flex gap-5">
-              
-              {/* Left panel - Top Ranked Sites */}
-              <div className="w-[340px] flex-shrink-0">
-                <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4">
+          {/* Header row — fixed, never scrolls */}
+          <div className="flex-shrink-0 px-6 pt-6 pb-4 flex w-full justify-between items-end">
+            <div>
+              <h1 className="text-white text-[20px] font-bold">Site Finder</h1>
+              <p className="text-[#6B7280] text-[13px] mt-1">
+                Find the best data center sites based on water availability and infrastructure readiness.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                className="border border-[#1F2937] bg-transparent text-[#D1D5DB] hover:bg-[#1F2937]/50 rounded-md px-4 py-2 text-sm transition-colors"
+                data-testid="button-new-project"
+              >
+                New Project
+              </button>
+              <button
+                className="bg-[#10B981] text-white hover:bg-[#059669] rounded-md px-4 py-2 text-sm transition-colors"
+                data-testid="button-add-custom-site"
+              >
+                + Add Custom Site
+              </button>
+            </div>
+          </div>
+
+          {/* Scrollable body — map row + detail card */}
+          <div className="flex-1 overflow-y-auto">
+
+            {/* Three-column row — fixed height */}
+            <div className="h-[420px] flex-shrink-0 px-6 pt-1 pb-4 flex gap-4">
+
+              {/* Left panel — Top Ranked Sites */}
+              <div className="w-[260px] flex-shrink-0 overflow-y-auto">
+                <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4 h-full flex flex-col">
                   <div className="flex items-center gap-2 mb-4">
                     <h2 className="text-sm font-semibold text-white">Top Ranked Sites</h2>
                     <span className="bg-[#1F2937] text-[#9CA3AF] rounded-full px-2 py-0.5 text-[10px] font-medium leading-tight">
                       8 sites
                     </span>
                   </div>
-                  
-                  <div className="flex flex-col">
+
+                  <div className="flex flex-col flex-1">
                     {sortedSites.slice(0, 5).map((site, index) => {
                       const isSelected = site.id === selectedSiteId;
                       const isLast = index === 4;
-                      const scoreColors = getScoreColors(site.overallScore);
-                      
+                      const sc = getScoreColors(site.overallScore);
                       return (
-                        <div 
+                        <div
                           key={site.id}
                           className={`
                             flex items-center gap-3 py-3 cursor-pointer
@@ -236,100 +240,92 @@ function Shell() {
                           onClick={() => setSelectedSiteId(site.id)}
                           data-testid={`row-site-${site.id}`}
                         >
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${scoreColors.bg} ${scoreColors.text}`}>
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${sc.bg} ${sc.text}`}>
                             {index + 1}
                           </div>
-                          
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium text-white truncate">{site.name}</div>
                             <div className="text-xs text-[#6B7280] truncate">{site.region}</div>
                           </div>
-                          
                           <div className="flex flex-col items-center justify-center">
-                            <div 
-                              className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2 ${scoreColors.border} ${scoreColors.bg} ${scoreColors.text}`} 
+                            <div
+                              className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2 ${sc.border} ${sc.bg} ${sc.text}`}
                               data-testid={`badge-score-${site.id}`}
                             >
                               {site.overallScore}
                             </div>
-                            <div className={`text-[10px] mt-1 ${scoreColors.text} font-medium`}>
-                              {site.rating}
-                            </div>
+                            <div className={`text-[10px] mt-1 ${sc.text} font-medium`}>{site.rating}</div>
                           </div>
                         </div>
                       );
                     })}
                   </div>
-                  
+
                   <a className="text-[#10B981] text-xs hover:underline cursor-pointer mt-3 block text-right" data-testid="link-view-all">
                     View all sites &rarr;
                   </a>
                 </div>
               </div>
 
-              {/* Right panel - Stacked cards */}
-              <div className="flex-1 flex flex-col gap-4">
-                
-                {/* Card A - Site Suitability Score */}
+              {/* Center panel — Map */}
+              <div className="flex-1 min-w-0">
+                <SiteMap selectedSiteId={selectedSiteId} onSiteSelect={setSelectedSiteId} />
+              </div>
+
+              {/* Right panel — Score + Filters */}
+              <div className="w-[260px] flex-shrink-0 overflow-y-auto flex flex-col gap-4">
+
+                {/* Site Suitability Score */}
                 {selectedSite && (
                   <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-5">
                     <div className="flex justify-between items-center">
                       <h2 className="text-sm font-semibold text-white">Site Suitability Score</h2>
-                      <span className="text-[#6B7280] text-xs">{selectedSite.name}</span>
+                      <span className="text-[#6B7280] text-xs truncate max-w-[100px]">{selectedSite.name}</span>
                     </div>
-                    
+
                     <div className="flex justify-center mt-4 mb-4">
-                      <div className="relative w-[140px] h-[140px]">
+                      <div className="relative w-[130px] h-[130px]">
                         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 140 140">
-                          <circle 
-                            cx="70" cy="70" r="54" 
-                            stroke="#1F2937" strokeWidth="10" fill="none" 
-                          />
-                          <circle 
-                            cx="70" cy="70" r="54" 
-                            stroke={getScoreColors(selectedSite.overallScore).stroke} 
-                            strokeWidth="10" fill="none" 
-                            strokeLinecap="round"
-                            strokeDasharray="339.3" 
+                          <circle cx="70" cy="70" r="54" stroke="#1F2937" strokeWidth="10" fill="none" />
+                          <circle
+                            cx="70" cy="70" r="54"
+                            stroke={getScoreColors(selectedSite.overallScore).stroke}
+                            strokeWidth="10" fill="none" strokeLinecap="round"
+                            strokeDasharray="339.3"
                             strokeDashoffset={339.3 - (selectedSite.overallScore / 100) * 339.3}
                           />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className="text-[28px] font-bold text-white leading-none">
-                            {selectedSite.overallScore}
-                          </span>
-                          <span className={`text-[12px] font-medium ${getScoreColors(selectedSite.overallScore).text} mt-1`}>
-                            {selectedSite.rating}
-                          </span>
+                          <span className="text-[26px] font-bold text-white leading-none">{selectedSite.overallScore}</span>
+                          <span className={`text-[11px] font-medium ${getScoreColors(selectedSite.overallScore).text} mt-1`}>{selectedSite.rating}</span>
                         </div>
                       </div>
                     </div>
-                    
-                    <p className="text-xs text-[#6B7280] text-center px-4">
-                      {selectedSite.overallScore >= 80 ? "Excellent site with strong water access and infrastructure readiness." : 
-                       selectedSite.overallScore >= 60 ? "Good site with adequate water and infrastructure resources." : 
-                       "Site has significant constraints. Review details carefully."}
+
+                    <p className="text-xs text-[#6B7280] text-center px-2">
+                      {selectedSite.overallScore >= 80
+                        ? 'Excellent site with strong water access and infrastructure readiness.'
+                        : selectedSite.overallScore >= 60
+                        ? 'Good site with adequate water and infrastructure resources.'
+                        : 'Site has significant constraints. Review details carefully.'}
                     </p>
-                    
-                    <div className="mt-5 space-y-3">
+
+                    <div className="mt-4 space-y-3">
                       {[
                         { label: 'Water Access', score: selectedSite.waterAccess.score },
                         { label: 'Infrastructure', score: selectedSite.infrastructure.score },
                         { label: 'Regulatory', score: selectedSite.regulatory.score },
-                        { label: 'Future Capacity', score: Math.round((selectedSite.waterAccess.score + selectedSite.infrastructure.score) / 2) }
+                        { label: 'Future Capacity', score: Math.round((selectedSite.waterAccess.score + selectedSite.infrastructure.score) / 2) },
                       ].map((metric, i) => {
-                        const metricColors = getScoreColors(metric.score);
+                        const mc = getScoreColors(metric.score);
                         return (
-                          <div key={i} className="flex flex-col">
+                          <div key={i}>
                             <div className="flex justify-between items-center mb-1">
                               <span className="text-xs text-[#9CA3AF]">{metric.label}</span>
-                              <span className={`text-xs font-bold ${metricColors.text}`}>{metric.score}</span>
+                              <span className={`text-xs font-bold ${mc.text}`}>{metric.score}</span>
                             </div>
                             <div className="w-full h-1.5 bg-[#1F2937] rounded-full overflow-hidden">
-                              <div 
-                                className={`h-full rounded-full`} 
-                                style={{ width: `${metric.score}%`, backgroundColor: metricColors.stroke }}
-                              />
+                              <div className="h-full rounded-full" style={{ width: `${metric.score}%`, backgroundColor: mc.stroke }} />
                             </div>
                           </div>
                         );
@@ -338,14 +334,13 @@ function Shell() {
                   </div>
                 )}
 
-                {/* Card B - Quick Filters */}
+                {/* Quick Filters */}
                 <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-5">
                   <h2 className="text-sm font-semibold text-white mb-4">Quick Filters</h2>
-                  
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div>
                       <label className="block text-xs text-[#6B7280] mb-1">Region</label>
-                      <select 
+                      <select
                         value={regionFilter}
                         onChange={(e) => setRegionFilter(e.target.value)}
                         className="w-full bg-[#0A0E17] border border-[#1F2937] text-white text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#10B981]"
@@ -357,10 +352,9 @@ function Shell() {
                         <option>Qassim</option>
                       </select>
                     </div>
-                    
                     <div>
                       <label className="block text-xs text-[#6B7280] mb-1">Power Requirement</label>
-                      <select 
+                      <select
                         value={powerFilter}
                         onChange={(e) => setPowerFilter(e.target.value)}
                         className="w-full bg-[#0A0E17] border border-[#1F2937] text-white text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#10B981]"
@@ -373,10 +367,9 @@ function Shell() {
                         <option>500 MW+</option>
                       </select>
                     </div>
-                    
                     <div>
                       <label className="block text-xs text-[#6B7280] mb-1">Cooling Technology</label>
-                      <select 
+                      <select
                         value={coolingFilter}
                         onChange={(e) => setCoolingFilter(e.target.value)}
                         className="w-full bg-[#0A0E17] border border-[#1F2937] text-white text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#10B981]"
@@ -389,9 +382,8 @@ function Shell() {
                         <option>DLC</option>
                       </select>
                     </div>
-                    
-                    <button 
-                      className="mt-4 w-full bg-[#10B981] hover:bg-[#059669] text-white text-sm font-medium py-2 rounded-md transition-colors"
+                    <button
+                      className="w-full bg-[#10B981] hover:bg-[#059669] text-white text-sm font-medium py-2 rounded-md transition-colors"
                       data-testid="button-apply-filters"
                     >
                       Apply Filters
@@ -401,7 +393,15 @@ function Shell() {
 
               </div>
             </div>
-          </div>
+
+            {/* Site Detail card — below the map row */}
+            {selectedSite && (
+              <div className="px-6 pb-6">
+                <SiteDetail site={selectedSite} />
+              </div>
+            )}
+
+          </div>{/* end scrollable body */}
         </div>
       </div>
       
