@@ -37,6 +37,28 @@ export const sites = [
       { name: "STCS Fiber Hub", type: "Connectivity", distance: "2.1 km", status: "Operational" },
       { name: "King Khalid Industrial Park", type: "Industrial Zone", distance: "5.3 km", status: "Active" },
     ],
+    waterAccessDetail: {
+      overallScore: 94,
+      riskLevel: "Low",
+      aiRecommendation:
+        "Heet Industrial City benefits from direct proximity to the Heet TSE Plant and a dense cluster of treated sewage effluent infrastructure. Water availability is projected to remain high through 2030 with planned capacity expansions. This site is the strongest water-access candidate in the Riyadh region.",
+      nearbyWaterSources: [
+        { plant: "Heet TSE Plant", distance: "0.8 km", capacity: "52,000 m3/day", status: "Operational" },
+        { plant: "Riyadh North TSE Plant", distance: "12.4 km", capacity: "120,000 m3/day", status: "Operational" },
+        { plant: "Riyadh TSE Ring Pipeline Offtake", distance: "18.7 km", capacity: "320,000 m3/day", status: "Operational" },
+      ],
+      availabilityTimeline: [
+        { year: 2025, score: 94 },
+        { year: 2026, score: 95 },
+        { year: 2028, score: 97 },
+        { year: 2030, score: 98 },
+      ],
+      supportingDocuments: [
+        { name: "NWC Water Availability Report – Heet Zone 2024", type: "Regulatory" },
+        { name: "SWCC TSE Capacity Study Q3 2024", type: "Technical" },
+        { name: "Heet Industrial City Water MOU", type: "Agreement" },
+      ],
+    },
   },
   {
     id: "site-002",
@@ -76,6 +98,28 @@ export const sites = [
       { name: "SEC Grid Station K-12", type: "Power", distance: "2.6 km", status: "Operational" },
       { name: "Riyadh Logistics Hub", type: "Logistics", distance: "6.1 km", status: "Active" },
     ],
+    waterAccessDetail: {
+      overallScore: 88,
+      riskLevel: "Low",
+      aiRecommendation:
+        "Al-Khair Industrial City holds a secure water position anchored by its dedicated TSE plant and a SWCC desalination feeder less than 4 km away. Dual-source redundancy reduces supply risk significantly. Capacity is expected to increase with the planned Phase 2 TSE expansion scheduled for 2026.",
+      nearbyWaterSources: [
+        { plant: "Al-Khair TSE Treatment Plant", distance: "1.2 km", capacity: "45,000 m3/day", status: "Operational" },
+        { plant: "SWCC Desalination Feeder", distance: "3.8 km", capacity: "80,000 m3/day", status: "Operational" },
+        { plant: "King Fahd Storage Reservoir", distance: "9.1 km", capacity: "500,000 m3 storage", status: "Operational" },
+      ],
+      availabilityTimeline: [
+        { year: 2025, score: 88 },
+        { year: 2026, score: 91 },
+        { year: 2028, score: 92 },
+        { year: 2030, score: 93 },
+      ],
+      supportingDocuments: [
+        { name: "Al-Khair Water Supply Agreement 2023", type: "Agreement" },
+        { name: "SWCC Eastern Feeder Capacity Report", type: "Technical" },
+        { name: "NWC Riyadh East Infrastructure Plan", type: "Regulatory" },
+      ],
+    },
   },
   {
     id: "site-003",
@@ -115,6 +159,28 @@ export const sites = [
       { name: "Sudair Techno Valley", type: "Technology Park", distance: "4.2 km", status: "Active" },
       { name: "National Fiber Backbone Node", type: "Connectivity", distance: "5.7 km", status: "Operational" },
     ],
+    waterAccessDetail: {
+      overallScore: 76,
+      riskLevel: "Medium",
+      aiRecommendation:
+        "Sudair Industrial City has adequate TSE infrastructure but the 3.1 km connection distance introduces moderate supply risk for high-volume data center cooling. A planned pipeline extension in 2026 should improve the rating materially. Securing a water offtake agreement with NWC before commencing construction is strongly advised.",
+      nearbyWaterSources: [
+        { plant: "Sudair TSE Plant", distance: "3.1 km", capacity: "38,000 m3/day", status: "Operational" },
+        { plant: "Riyadh–Qassim Backbone Feeder", distance: "22.5 km", capacity: "180,000 m3/day", status: "Under Construction" },
+        { plant: "Sudair Reservoir (Planned)", distance: "5.8 km", capacity: "12,000 m3/day", status: "Under Construction" },
+      ],
+      availabilityTimeline: [
+        { year: 2025, score: 76 },
+        { year: 2026, score: 80 },
+        { year: 2028, score: 83 },
+        { year: 2030, score: 85 },
+      ],
+      supportingDocuments: [
+        { name: "Sudair Industrial Zone Water Study 2023", type: "Technical" },
+        { name: "SWCC Pipeline Extension Proposal", type: "Regulatory" },
+        { name: "NWC Capacity Reservation Request Form", type: "Agreement" },
+      ],
+    },
   },
   {
     id: "site-004",
@@ -154,6 +220,28 @@ export const sites = [
       { name: "ARAMCO Substation D-22", type: "Power", distance: "2.3 km", status: "Operational" },
       { name: "Eastern Province Fiber Ring", type: "Connectivity", distance: "1.1 km", status: "Operational" },
     ],
+    waterAccessDetail: {
+      overallScore: 68,
+      riskLevel: "Medium",
+      aiRecommendation:
+        "Dammam 2nd Industrial City relies primarily on the Jubail Industrial Canal, which is at approximately 72% utilization and subject to seasonal variation. The Eastern Province's growing industrial demand is adding pressure to existing supply. An agreement with the Royal Commission for Jubail & Yanbu is advised before locking in this site.",
+      nearbyWaterSources: [
+        { plant: "Dammam TSE Treatment Facility", distance: "4.5 km", capacity: "31,000 m3/day", status: "Operational" },
+        { plant: "Jubail Phase 3 Desalination Plant", distance: "18.2 km", capacity: "800,000 m3/day", status: "Operational" },
+        { plant: "Dammam Municipal Reservoir", distance: "9.7 km", capacity: "200,000 m3 storage", status: "Operational" },
+      ],
+      availabilityTimeline: [
+        { year: 2025, score: 68 },
+        { year: 2026, score: 65 },
+        { year: 2028, score: 70 },
+        { year: 2030, score: 74 },
+      ],
+      supportingDocuments: [
+        { name: "RCJY Water Allocation Policy 2024", type: "Regulatory" },
+        { name: "Eastern Province Water Demand Forecast", type: "Technical" },
+        { name: "Jubail Canal Environmental Impact Study", type: "Compliance" },
+      ],
+    },
   },
   {
     id: "site-005",
@@ -193,6 +281,28 @@ export const sites = [
       { name: "Qassim University Research Park", type: "Technology Park", distance: "9.8 km", status: "Active" },
       { name: "STC Regional Node Buraydah", type: "Connectivity", distance: "7.3 km", status: "Operational" },
     ],
+    waterAccessDetail: {
+      overallScore: 59,
+      riskLevel: "High",
+      aiRecommendation:
+        "Qassim Industrial City faces constrained water access due to limited TSE capacity in the Buraydah municipal network and no direct desalination connectivity. The 6.2 km TSE line distance elevates supply risk considerably. A dedicated water supply MOU with NWC and investment in on-site storage is strongly recommended before committing to this site.",
+      nearbyWaterSources: [
+        { plant: "Buraydah Municipal TSE Facility", distance: "6.2 km", capacity: "22,000 m3/day", status: "Operational" },
+        { plant: "Qassim Desalination Booster Station", distance: "28.4 km", capacity: "45,000 m3/day", status: "Under Construction" },
+        { plant: "Qassim Integrated TSE Hub", distance: "14.9 km", capacity: "60,000 m3/day", status: "Under Construction" },
+      ],
+      availabilityTimeline: [
+        { year: 2025, score: 59 },
+        { year: 2026, score: 58 },
+        { year: 2028, score: 63 },
+        { year: 2030, score: 68 },
+      ],
+      supportingDocuments: [
+        { name: "NWC Qassim Region Water Audit 2023", type: "Technical" },
+        { name: "MEWA Water Stress Assessment – Qassim", type: "Regulatory" },
+        { name: "Buraydah TSE Expansion Feasibility Study", type: "Technical" },
+      ],
+    },
   },
   {
     id: "site-006",
@@ -232,6 +342,28 @@ export const sites = [
       { name: "Jubail Commercial Port", type: "Logistics", distance: "12.1 km", status: "Active" },
       { name: "SABIC Fiber Network Node", type: "Connectivity", distance: "6.9 km", status: "Operational" },
     ],
+    waterAccessDetail: {
+      overallScore: 52,
+      riskLevel: "High",
+      aiRecommendation:
+        "Jubail 3rd Industrial City has significant water access challenges, with the nearest TSE source nearly 9 km away and constrained industrial-use allocations under Royal Commission regulations. A phased development approach using air cooling initially is strongly advised while water infrastructure is expanded under the RCJY 2026 capacity programme.",
+      nearbyWaterSources: [
+        { plant: "Jubail Royal Commission TSE Plant", distance: "8.7 km", capacity: "18,500 m3/day", status: "Operational" },
+        { plant: "Jubail Phase 3 Desalination Plant", distance: "24.1 km", capacity: "800,000 m3/day", status: "Operational" },
+        { plant: "Ras Al-Khair Desalination Plant", distance: "38.5 km", capacity: "1,036,000 m3/day", status: "Operational" },
+      ],
+      availabilityTimeline: [
+        { year: 2025, score: 52 },
+        { year: 2026, score: 50 },
+        { year: 2028, score: 55 },
+        { year: 2030, score: 60 },
+      ],
+      supportingDocuments: [
+        { name: "RCJY Industrial Water Allocation Policy", type: "Regulatory" },
+        { name: "Jubail 3rd Zone Infrastructure Report 2024", type: "Technical" },
+        { name: "MEWA Coastal Water Use Guidelines", type: "Compliance" },
+      ],
+    },
   },
   {
     id: "site-007",
@@ -271,6 +403,28 @@ export const sites = [
       { name: "Afif Regional Airstrip", type: "Logistics", distance: "18.5 km", status: "Active" },
       { name: "Microwave Relay Tower A-7", type: "Connectivity", distance: "3.2 km", status: "Operational" },
     ],
+    waterAccessDetail: {
+      overallScore: 35,
+      riskLevel: "High",
+      aiRecommendation:
+        "Afif Technology Industrial Zone is in a critical water-stress region with severely limited TSE infrastructure. The municipal treatment plant is at capacity and the 14.3 km distance makes direct connection prohibitively expensive. This site should only be considered if a dedicated NWC supply agreement or brackish-water treatment facility can be secured first.",
+      nearbyWaterSources: [
+        { plant: "Afif Municipal Treatment Plant", distance: "14.3 km", capacity: "9,800 m3/day", status: "Limited Capacity" },
+        { plant: "Afif Regional Water Treatment Upgrade", distance: "14.3 km", capacity: "25,000 m3/day", status: "Planned" },
+        { plant: "Riyadh–Qassim Backbone Feeder", distance: "82.4 km", capacity: "180,000 m3/day", status: "Under Construction" },
+      ],
+      availabilityTimeline: [
+        { year: 2025, score: 35 },
+        { year: 2026, score: 33 },
+        { year: 2028, score: 38 },
+        { year: 2030, score: 42 },
+      ],
+      supportingDocuments: [
+        { name: "MEWA Water Stress Map – Afif Region 2024", type: "Regulatory" },
+        { name: "Afif Groundwater Survey 2023", type: "Technical" },
+        { name: "NWC Expansion Feasibility – Afif Zone", type: "Technical" },
+      ],
+    },
   },
   {
     id: "site-008",
@@ -310,6 +464,28 @@ export const sites = [
       { name: "Wadi Al-Dawasir Airport", type: "Logistics", distance: "31.4 km", status: "Active" },
       { name: "Satellite Ground Station WD", type: "Connectivity", distance: "8.9 km", status: "Operational" },
     ],
+    waterAccessDetail: {
+      overallScore: 24,
+      riskLevel: "High",
+      aiRecommendation:
+        "Wadi Al-Dawasir is the most water-constrained site evaluated, with only 5,200 m3/day of available capacity from a treatment plant over 22 km away. The region relies on declining fossil aquifer sources with no planned desalination connectivity. This site is not recommended for any water-cooled data center application under current or projected infrastructure plans.",
+      nearbyWaterSources: [
+        { plant: "Wadi Al-Dawasir Municipal TSE", distance: "22.1 km", capacity: "5,200 m3/day", status: "Limited Capacity" },
+        { plant: "Al-Aflaj Water Treatment Plant", distance: "68.3 km", capacity: "12,000 m3/day", status: "Operational" },
+        { plant: "Wadi Al-Dawasir Aquifer Well Field", distance: "31.5 km", capacity: "2,800 m3/day", status: "Constrained" },
+      ],
+      availabilityTimeline: [
+        { year: 2025, score: 24 },
+        { year: 2026, score: 21 },
+        { year: 2028, score: 22 },
+        { year: 2030, score: 25 },
+      ],
+      supportingDocuments: [
+        { name: "MEWA Southern Region Water Scarcity Report 2024", type: "Regulatory" },
+        { name: "Wadi Al-Dawasir Aquifer Depletion Study", type: "Technical" },
+        { name: "Saudi Green Initiative Water Impact Assessment", type: "Compliance" },
+      ],
+    },
   },
 ];
 

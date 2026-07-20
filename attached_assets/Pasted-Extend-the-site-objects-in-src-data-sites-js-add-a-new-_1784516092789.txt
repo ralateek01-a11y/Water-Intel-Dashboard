@@ -1,0 +1,54 @@
+Extend the site objects in src/data/sites.js — add a new field
+"waterAccessDetail" to each site with this shape:
+
+{
+  overallScore: number (reuse the existing waterAccess.score),
+  riskLevel: "Low" | "Medium" | "High",
+  aiRecommendation: string (2-3 sentences),
+  nearbyWaterSources: [
+    { plant: string, distance: string, capacity: string, status: string }
+  ],
+  availabilityTimeline: [
+    { year: number, score: number }
+  ] (3-4 years showing how water availability score is projected to change),
+  supportingDocuments: [
+    { name: string, type: string }
+  ]
+}
+
+Populate this for all sites with realistic data consistent with each site's
+existing waterAccess field (e.g. the nearbyWaterSources list should include
+the same source plant already referenced, plus 1-2 more nearby ones).
+
+Now build the "Water Access" tab content (replacing its placeholder) on the
+Site Detail card:
+
+1. Overview section at the top: overall water score (reuse the same
+   circular gauge style from the Site Suitability Score panel, smaller
+   size), a "Water Risk Level" badge (green/amber/red for Low/Medium/High),
+   and the AI Recommendation shown as a highlighted callout box with a
+   small AI/sparkle icon — style it distinctly from plain text, like a
+   quoted insight box with a subtle colored left border.
+
+2. "Nearby Water Sources" section: a table with columns Plant, Distance,
+   Capacity, Status (colored badge for status).
+
+3. "Water Demand Analysis" section: reuse the site's existing coolingImpact
+   data to show estimated daily usage for Air Cooling / Liquid Cooling /
+   Immersion Cooling as a small horizontal bar comparison (this can be a
+   simplified version of what the full Cooling tab will show in Phase 16 —
+   just a quick comparison here, not interactive yet).
+
+4. "Water Availability Timeline" section: render availabilityTimeline as
+   a simple horizontal bar chart, one bar per year, bar length proportional
+   to score, with the year and score labeled.
+
+5. "Supporting Documents" section: list supportingDocuments as clickable
+   rows with a document icon and type label (these can link to nothing /
+   "#" for now, we'll wire real document linking in a later phase).
+
+6. A small zoomed-in map at the bottom of this tab (reuse the Leaflet setup
+   from the Water Infrastructure page) centered on this specific site's
+   coordinates, showing ONLY water-related markers (TSE pipelines,
+   treatment plants, reservoirs) within a reasonable radius — filter out
+   industrial cities and data center markers for this view.

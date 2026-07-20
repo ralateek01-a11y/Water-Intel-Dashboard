@@ -17,9 +17,24 @@ import {
   CheckCircle2,
   AlertCircle,
   XCircle,
+  Sparkles,
+  FileText,
+  BarChart3,
 } from 'lucide-react';
+import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import { waterInfrastructure } from '../data/waterInfrastructure';
 
 /* ─── types ──────────────────────────────────────────────── */
+interface WaterAccessDetail {
+  overallScore: number;
+  riskLevel: 'Low' | 'Medium' | 'High';
+  aiRecommendation: string;
+  nearbyWaterSources: { plant: string; distance: string; capacity: string; status: string }[];
+  availabilityTimeline: { year: number; score: number }[];
+  supportingDocuments: { name: string; type: string }[];
+}
+
 interface Site {
   id: string;
   name: string;
@@ -27,6 +42,7 @@ interface Site {
   distanceFromRiyadh: number;
   overallScore: number;
   rating: string;
+  coordinates: { lat: number; lng: number };
   waterAccess: {
     score: number;
     nearestTSELine: string;
@@ -57,6 +73,7 @@ interface Site {
     distance: string;
     status: string;
   }[];
+  waterAccessDetail?: WaterAccessDetail;
 }
 
 interface SiteDetailProps {
@@ -79,6 +96,12 @@ function scoreColors(score: number) {
   if (score >= 80) return { text: 'text-[#10B981]', bg: 'bg-[#10B981]/15', border: 'border-[#10B981]/30', bar: '#10B981' };
   if (score >= 60) return { text: 'text-amber-400', bg: 'bg-amber-500/15', border: 'border-amber-500/30', bar: '#F59E0B' };
   return { text: 'text-red-400', bg: 'bg-red-500/15', border: 'border-red-500/30', bar: '#EF4444' };
+}
+
+function riskColors(level: 'Low' | 'Medium' | 'High') {
+  if (level === 'Low') return { text: 'text-[#10B981]', bg: 'bg-[#10B981]/15', border: 'border-[#10B981]/30' };
+  if (level === 'Medium') return { text: 'text-amber-400', bg: 'bg-amber-500/15', border: 'border-amber-500/30' };
+  return { text: 'text-red-400', bg: 'bg-red-500/15', border: 'border-red-500/30' };
 }
 
 function complexityIcon(level: string) {
@@ -108,7 +131,8 @@ function availColor(level: string) {
 function statusColor(status: string) {
   const s = status.toLowerCase();
   if (s === 'operational' || s === 'active') return 'text-[#10B981] bg-[#10B981]/10';
-  if (s.includes('constrained') || s.includes('limited')) return 'text-amber-400 bg-amber-500/10';
+  if (s.includes('constrained') || s.includes('limited')) return 'text-red-400 bg-red-500/10';
+  if (s.includes('construction') || s.includes('planned')) return 'text-amber-400 bg-amber-500/10';
   return 'text-[#9CA3AF] bg-white/5';
 }
 
@@ -126,6 +150,50 @@ function nearbyIcon(type: string) {
 /* parse "+1,800 m3/day" → number for bar scaling */
 function parseCoolingValue(val: string) {
   return parseInt(val.replace(/[^0-9]/g, ''), 10) || 0;
+}
+
+/* haversine distance in km */
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/* ─── CircleGauge (small SVG ring) ───────────────────────── */
+function CircleGauge({ score, size = 80 }: { score: number; size?: number }) {
+  const c = scoreColors(score);
+  const r = size / 2 - 7;
+  const cx = size / 2;
+  const cy = size / 2;
+  const circ = 2 * Math.PI * r;
+  const dash = (score / 100) * circ;
+  return (
+    <svg width={size} height={size} className="flex-shrink-0">
+      {/* track */}
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#1F2937" strokeWidth={7} />
+      {/* fill */}
+      <circle
+        cx={cx}
+        cy={cy}
+        r={r}
+        fill="none"
+        stroke={c.bar}
+        strokeWidth={7}
+        strokeLinecap="round"
+        strokeDasharray={`${dash} ${circ}`}
+        transform={`rotate(-90 ${cx} ${cy})`}
+      />
+      <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle" fill="white" fontSize={size * 0.22} fontWeight="700">
+        {score}
+      </text>
+    </svg>
+  );
 }
 
 /* ─── sub-cards ───────────────────────────────────────────── */
@@ -169,6 +237,263 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+/* ─── SectionHeader ───────────────────────────────────────── */
+function SectionHeader({ icon: Icon, title }: { icon: React.ComponentType<React.SVGProps<SVGSVGElement>>; title: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <div className="w-6 h-6 rounded-md bg-[#1F2937] flex items-center justify-center flex-shrink-0">
+        <Icon className="w-3.5 h-3.5 text-sky-400" />
+      </div>
+      <span className="text-[13px] font-semibold text-white">{title}</span>
+    </div>
+  );
+}
+
+/* ─── waterInfrastructure type → map colour ──────────────── */
+function wInfraColor(type: string) {
+  if (type === 'desalination') return '#22D3EE';   // cyan
+  if (type === 'pipeline') return '#A78BFA';        // violet
+  if (type === 'reservoir') return '#34D399';       // teal
+  if (type === 'planned') return '#FCD34D';         // amber
+  return '#60A5FA';                                  // blue (wastewater_treatment)
+}
+
+/* ─── Water Access tab ────────────────────────────────────── */
+function WaterAccessTab({ site }: { site: Site }) {
+  const detail = site.waterAccessDetail;
+
+  // Fallback if data not yet present
+  if (!detail) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <p className="text-[#4B5563] text-sm">Water access detail not available for this site.</p>
+      </div>
+    );
+  }
+
+  const sc = scoreColors(detail.overallScore);
+  const rc = riskColors(detail.riskLevel);
+
+  // Cooling demand bars
+  const coolingRows = [
+    { label: 'Air Cooling', value: site.coolingImpact.airCooling },
+    { label: 'Liquid Cooling', value: site.coolingImpact.liquidCooling },
+    { label: 'Immersion Cooling', value: site.coolingImpact.immersionCooling },
+  ];
+  const maxCooling = Math.max(...coolingRows.map((c) => parseCoolingValue(c.value)));
+
+  // Timeline max for bar scaling
+  const maxTimelineScore = Math.max(...detail.availabilityTimeline.map((t) => t.score), 100);
+
+  // Nearby water infra for mini map (within 150 km)
+  const mapItems = waterInfrastructure.filter((wi) =>
+    haversineKm(site.coordinates.lat, site.coordinates.lng, wi.coordinates.lat, wi.coordinates.lng) <= 150
+  );
+
+  return (
+    <div className="flex flex-col gap-5">
+
+      {/* ── 1. Overview row ── */}
+      <div className="flex items-start gap-4">
+        {/* Gauge */}
+        <div className="flex flex-col items-center gap-1 flex-shrink-0">
+          <CircleGauge score={detail.overallScore} size={88} />
+          <span className={`text-[11px] font-medium ${sc.text}`}>Water Score</span>
+        </div>
+
+        {/* Risk badge + AI callout */}
+        <div className="flex-1 flex flex-col gap-3 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${rc.bg} ${rc.text} ${rc.border}`}>
+              {detail.riskLevel === 'Low' && <CheckCircle2 className="w-3.5 h-3.5" />}
+              {detail.riskLevel === 'Medium' && <AlertCircle className="w-3.5 h-3.5" />}
+              {detail.riskLevel === 'High' && <XCircle className="w-3.5 h-3.5" />}
+              {detail.riskLevel} Risk
+            </span>
+            <span className="text-[#4B5563] text-[11px]">Water Risk Level</span>
+          </div>
+
+          {/* AI Recommendation callout */}
+          <div className="relative bg-sky-500/5 border border-sky-500/20 rounded-xl p-3.5 pl-4">
+            <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-sky-500/50 rounded-l-xl" />
+            <div className="flex items-start gap-2">
+              <Sparkles className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
+              <p className="text-[13px] text-[#D1D5DB] leading-relaxed">{detail.aiRecommendation}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 2. Nearby Water Sources ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <SectionHeader icon={Droplet} title="Nearby Water Sources" />
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="border-b border-[#1F2937]">
+              <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-3">Plant / Source</th>
+              <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-3">Distance</th>
+              <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-3">Capacity</th>
+              <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {detail.nearbyWaterSources.map((src, i) => (
+              <tr key={i} className="border-b border-[#1F2937]/50 last:border-0">
+                <td className="py-2.5 pr-3 text-white font-medium leading-snug">{src.plant}</td>
+                <td className="py-2.5 pr-3 text-[#9CA3AF] whitespace-nowrap">{src.distance}</td>
+                <td className="py-2.5 pr-3 text-[#9CA3AF] leading-snug">{src.capacity}</td>
+                <td className="py-2.5">
+                  <span className={`inline-block text-[11px] font-medium px-2 py-0.5 rounded-full ${statusColor(src.status)}`}>
+                    {src.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ── 3. Water Demand Analysis ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <SectionHeader icon={BarChart3} title="Water Demand by Cooling Technology" />
+        <p className="text-[11px] text-[#6B7280] mb-3 -mt-1">Estimated additional daily usage at this site</p>
+        <div className="flex flex-col gap-3">
+          {coolingRows.map((c) => {
+            const pct = maxCooling > 0 ? (parseCoolingValue(c.value) / maxCooling) * 100 : 0;
+            const col = scoreColors(100 - pct); // invert: lower demand = greener
+            return (
+              <div key={c.label} className="flex items-center gap-3">
+                <span className="text-[12px] text-[#9CA3AF] w-[120px] flex-shrink-0">{c.label}</span>
+                <div className="flex-1 h-2 bg-[#1F2937] rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${pct}%`, backgroundColor: col.bar }}
+                  />
+                </div>
+                <span className="text-[12px] font-medium text-white w-[90px] text-right">{c.value}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── 4. Water Availability Timeline ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <SectionHeader icon={BarChart3} title="Water Availability Timeline" />
+        <p className="text-[11px] text-[#6B7280] mb-4 -mt-1">Projected water availability score by year</p>
+        <div className="flex flex-col gap-3">
+          {detail.availabilityTimeline.map((item) => {
+            const pct = (item.score / maxTimelineScore) * 100;
+            const c = scoreColors(item.score);
+            return (
+              <div key={item.year} className="flex items-center gap-3">
+                <span className="text-[12px] font-medium text-[#9CA3AF] w-10 flex-shrink-0">{item.year}</span>
+                <div className="flex-1 h-5 bg-[#1F2937] rounded-md overflow-hidden relative">
+                  <div
+                    className="h-full rounded-md transition-all"
+                    style={{ width: `${pct}%`, backgroundColor: c.bar, opacity: 0.8 }}
+                  />
+                </div>
+                <span className={`text-[12px] font-bold w-8 text-right ${c.text}`}>{item.score}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── 5. Supporting Documents ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <SectionHeader icon={FileText} title="Supporting Documents" />
+        <div className="flex flex-col divide-y divide-[#1F2937]">
+          {detail.supportingDocuments.map((doc, i) => (
+            <a
+              key={i}
+              href="#"
+              className="flex items-center gap-3 py-2.5 hover:bg-[#1F2937]/40 rounded-lg px-1 -mx-1 transition-colors group"
+            >
+              <div className="w-7 h-7 rounded-lg bg-[#1F2937] flex items-center justify-center flex-shrink-0 group-hover:bg-sky-500/10 transition-colors">
+                <FileText className="w-3.5 h-3.5 text-[#6B7280] group-hover:text-sky-400 transition-colors" />
+              </div>
+              <span className="flex-1 text-[13px] text-[#D1D5DB] group-hover:text-white transition-colors leading-snug">{doc.name}</span>
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#1F2937] text-[#9CA3AF] flex-shrink-0">{doc.type}</span>
+              <ChevronRight className="w-3.5 h-3.5 text-[#4B5563] group-hover:text-sky-400 flex-shrink-0 transition-colors" />
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {/* ── 6. Mini Water Infrastructure Map ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <SectionHeader icon={MapPin} title="Nearby Water Infrastructure" />
+        <p className="text-[11px] text-[#6B7280] mb-3 -mt-1">TSE plants, pipelines & reservoirs within 150 km</p>
+
+        {/* Legend */}
+        <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-3">
+          {[
+            { label: 'Treatment Plant', color: '#60A5FA' },
+            { label: 'Desalination', color: '#22D3EE' },
+            { label: 'Pipeline', color: '#A78BFA' },
+            { label: 'Reservoir', color: '#34D399' },
+            { label: 'Planned', color: '#FCD34D' },
+          ].map((l) => (
+            <div key={l.label} className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: l.color }} />
+              <span className="text-[11px] text-[#9CA3AF]">{l.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="rounded-xl overflow-hidden" style={{ height: 280 }}>
+          <MapContainer
+            center={[site.coordinates.lat, site.coordinates.lng]}
+            zoom={7}
+            style={{ width: '100%', height: '100%' }}
+            zoomControl={true}
+            attributionControl={false}
+          >
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              attribution=""
+            />
+
+            {/* Site marker — white */}
+            <CircleMarker
+              center={[site.coordinates.lat, site.coordinates.lng]}
+              radius={8}
+              pathOptions={{ color: '#FFFFFF', fillColor: '#FFFFFF', fillOpacity: 1, weight: 2 }}
+            >
+              <Tooltip permanent direction="top" offset={[0, -10]}>
+                <span style={{ fontSize: 11, fontWeight: 600 }}>{site.name}</span>
+              </Tooltip>
+            </CircleMarker>
+
+            {/* Water infrastructure markers */}
+            {mapItems.map((wi) => (
+              <CircleMarker
+                key={wi.id}
+                center={[wi.coordinates.lat, wi.coordinates.lng]}
+                radius={6}
+                pathOptions={{
+                  color: wInfraColor(wi.type),
+                  fillColor: wInfraColor(wi.type),
+                  fillOpacity: 0.75,
+                  weight: 1.5,
+                }}
+              >
+                <Tooltip direction="top" offset={[0, -8]}>
+                  <span style={{ fontSize: 11 }}>{wi.name}</span>
+                  <br />
+                  <span style={{ fontSize: 10, color: '#9CA3AF' }}>{wi.capacity}</span>
+                </Tooltip>
+              </CircleMarker>
+            ))}
+          </MapContainer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Overview tab ────────────────────────────────────────── */
 function OverviewTab({ site }: { site: Site }) {
   const cooling = [
@@ -183,12 +508,9 @@ function OverviewTab({ site }: { site: Site }) {
   const rColors = scoreColors(site.regulatory.score);
 
   return (
-    /* 2-column layout: left grid of 4 cards, right nearby panel */
     <div className="flex gap-4 h-full">
-
       {/* Left — 2 × 2 grid */}
       <div className="flex-1 min-w-0 grid grid-cols-2 grid-rows-2 gap-4">
-
         {/* Water Access */}
         <CardShell title="Water Access" icon={Droplet} iconColor="text-sky-400" link="View details">
           <div className="flex items-center gap-2">
@@ -383,7 +705,8 @@ export function SiteDetail({ site }: SiteDetailProps) {
       {/* ── Tab content ── */}
       <div className="p-5">
         {activeTab === 'Overview' && <OverviewTab site={site} />}
-        {activeTab !== 'Overview' && <PlaceholderTab name={activeTab} />}
+        {activeTab === 'Water Access' && <WaterAccessTab site={site} />}
+        {activeTab !== 'Overview' && activeTab !== 'Water Access' && <PlaceholderTab name={activeTab} />}
       </div>
     </div>
   );
