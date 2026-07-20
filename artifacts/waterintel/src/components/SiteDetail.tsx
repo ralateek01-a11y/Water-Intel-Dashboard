@@ -64,6 +64,14 @@ interface InfrastructureDetail {
   aiRecommendation: string;
 }
 
+interface RegulatoryDetail {
+  requiredAgencies: { name: string; role: string }[];
+  requiredPermits: string[];
+  approvalProcess: { step: string; description: string; typicalDuration: string }[];
+  similarProjects: { name: string; location: string; approvalTime: string }[];
+  aiAdvice: string;
+}
+
 interface Site {
   id: string;
   name: string;
@@ -104,6 +112,7 @@ interface Site {
   }[];
   waterAccessDetail?: WaterAccessDetail;
   infrastructureDetail?: InfrastructureDetail;
+  regulatoryDetail?: RegulatoryDetail;
 }
 
 interface SiteDetailProps {
@@ -800,6 +809,144 @@ function OverviewTab({ site }: { site: Site }) {
   );
 }
 
+/* ─── Regulatory tab ──────────────────────────────────────── */
+function RegulatoryTab({ site }: { site: Site }) {
+  const detail = site.regulatoryDetail;
+
+  if (!detail) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <p className="text-[#4B5563] text-sm">Regulatory detail not available for this site.</p>
+      </div>
+    );
+  }
+
+  const complexityColor = site.regulatory.complexityLevel === 'Low'
+    ? 'text-[#10B981]' : site.regulatory.complexityLevel === 'Medium'
+    ? 'text-amber-400' : 'text-red-400';
+
+  return (
+    <div className="flex flex-col gap-5">
+
+      {/* ── 1. Required Agencies ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <div className="flex items-center justify-between mb-4">
+          <SectionHeader icon={Building2} title="Required Agencies" />
+          <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${
+            site.regulatory.complexityLevel === 'Low'
+              ? 'text-[#10B981] bg-[#10B981]/10 border-[#10B981]/30'
+              : site.regulatory.complexityLevel === 'Medium'
+              ? 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+              : 'text-red-400 bg-red-500/10 border-red-500/30'
+          }`}>
+            {detail.requiredAgencies.length} agencies · {site.regulatory.complexityLevel} complexity
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {detail.requiredAgencies.map((agency, i) => (
+            <div key={i} className="flex items-start gap-3 bg-[#111827] border border-[#1F2937] rounded-xl p-3">
+              <div className="w-7 h-7 rounded-lg bg-[#1F2937] flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Building2 className="w-3.5 h-3.5 text-violet-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[13px] font-semibold text-white leading-snug">{agency.name}</p>
+                <p className="text-[11px] text-[#6B7280] mt-0.5 leading-snug">{agency.role}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── 2. Required Permits ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <SectionHeader icon={FileText} title="Required Permits" />
+        <div className="grid grid-cols-2 gap-x-6 gap-y-0">
+          {detail.requiredPermits.map((permit, i) => (
+            <div key={i} className="flex items-start gap-2.5 py-2 border-b border-[#1F2937]/60 last:border-0">
+              <div className="w-5 h-5 rounded-md bg-violet-500/10 border border-violet-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <FileText className="w-3 h-3 text-violet-400" />
+              </div>
+              <span className="text-[12px] text-[#D1D5DB] leading-snug">{permit}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── 3. Approval Process ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <div className="flex items-center justify-between mb-4">
+          <SectionHeader icon={Clock} title="Approval Process" />
+          <span className="text-[11px] text-[#6B7280]">
+            Est. total: <span className={`font-semibold ${complexityColor}`}>{site.regulatory.estApprovalTime}</span>
+          </span>
+        </div>
+
+        {/* Vertical timeline */}
+        <div className="relative">
+          {/* connecting line */}
+          <div className="absolute left-[15px] top-6 bottom-6 w-[2px] bg-[#1F2937]" />
+
+          <div className="flex flex-col gap-0">
+            {detail.approvalProcess.map((item, i) => (
+              <div key={i} className="relative flex gap-4 pb-5 last:pb-0">
+                {/* Dot */}
+                <div className="relative z-10 w-8 flex-shrink-0 flex items-start justify-center pt-0.5">
+                  <div className={`w-[30px] h-[30px] rounded-full border-2 flex items-center justify-center text-[11px] font-bold
+                    ${i === 0 ? 'bg-[#10B981]/15 border-[#10B981]/50 text-[#10B981]'
+                    : i === detail.approvalProcess.length - 1 ? 'bg-violet-500/15 border-violet-500/40 text-violet-400'
+                    : 'bg-[#1F2937] border-[#374151] text-[#6B7280]'}`}>
+                    {i + 1}
+                  </div>
+                </div>
+
+                {/* Content card */}
+                <div className="flex-1 bg-[#111827] border border-[#1F2937] rounded-xl p-3.5 mb-0">
+                  <div className="flex items-start justify-between gap-3 mb-1.5">
+                    <h4 className="text-[13px] font-semibold text-white leading-snug">{item.step}</h4>
+                    <span className="flex-shrink-0 flex items-center gap-1 text-[11px] font-medium text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full whitespace-nowrap">
+                      <Clock className="w-3 h-3" />
+                      {item.typicalDuration}
+                    </span>
+                  </div>
+                  <p className="text-[12px] text-[#9CA3AF] leading-relaxed">{item.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 4. Similar Projects ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <SectionHeader icon={BarChart3} title="Similar Projects — Approval Benchmarks" />
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="border-b border-[#1F2937]">
+              <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-3">Project</th>
+              <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-3">Location</th>
+              <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2">Approval Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {detail.similarProjects.map((proj, i) => (
+              <tr key={i} className="border-b border-[#1F2937]/50 last:border-0">
+                <td className="py-2.5 pr-3 text-white font-medium leading-snug">{proj.name}</td>
+                <td className="py-2.5 pr-3 text-[#9CA3AF]">{proj.location}</td>
+                <td className="py-2.5">
+                  <span className="font-semibold text-amber-400">{proj.approvalTime}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ── 5. AI Advice ── */}
+      <AICallout text={detail.aiAdvice} />
+    </div>
+  );
+}
+
 /* ─── placeholder tab ─────────────────────────────────────── */
 function PlaceholderTab({ name }: { name: string }) {
   return (
@@ -881,7 +1028,8 @@ export function SiteDetail({ site }: SiteDetailProps) {
         {activeTab === 'Overview' && <OverviewTab site={site} />}
         {activeTab === 'Water Access' && <WaterAccessTab site={site} />}
         {activeTab === 'Infrastructure' && <InfrastructureTab site={site} />}
-        {activeTab !== 'Overview' && activeTab !== 'Water Access' && activeTab !== 'Infrastructure' && <PlaceholderTab name={activeTab} />}
+        {activeTab === 'Regulatory' && <RegulatoryTab site={site} />}
+        {activeTab !== 'Overview' && activeTab !== 'Water Access' && activeTab !== 'Infrastructure' && activeTab !== 'Regulatory' && <PlaceholderTab name={activeTab} />}
       </div>
     </div>
   );

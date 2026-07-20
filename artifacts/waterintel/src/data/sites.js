@@ -87,6 +87,54 @@ export const sites = [
       aiRecommendation:
         "Heet Industrial City leads all evaluated sites on infrastructure readiness. The 380 kV substation at 1.4 km provides 180 MW of immediately available power capacity — well in excess of a typical 50–100 MW hyperscale deployment. Dual-carrier fiber with a contracted 400 Gbps upgrade ensures long-term connectivity headroom. No significant infrastructure constraints identified.",
     },
+    regulatoryDetail: {
+      requiredAgencies: [
+        { name: "MODON", role: "Industrial city occupancy licence and zoning clearance" },
+        { name: "Saudi Electricity Company (SEC)", role: "Power connection agreement and grid tie-in permit" },
+        { name: "NWC", role: "Water supply and TSE allocation agreement" },
+      ],
+      requiredPermits: [
+        "MODON Industrial Occupancy Licence",
+        "SEC Power Connection Agreement",
+        "NWC Water Allocation Permit",
+        "GDCD Fire Safety Certificate",
+        "SASO Technical Compliance Certificate",
+      ],
+      approvalProcess: [
+        {
+          step: "Initial Application",
+          description: "Submit project brief, site plan, and power/water demand schedules to MODON. Obtain preliminary site reservation confirmation.",
+          typicalDuration: "2–3 weeks",
+        },
+        {
+          step: "Technical Review",
+          description: "MODON engineering team reviews load specifications; SEC assesses substation capacity and connection feasibility.",
+          typicalDuration: "4–6 weeks",
+        },
+        {
+          step: "Utility Agreements",
+          description: "Negotiate and execute power connection agreement with SEC and water allocation MOU with NWC. Both can proceed in parallel.",
+          typicalDuration: "4–6 weeks",
+        },
+        {
+          step: "Building & Safety Permits",
+          description: "Submit construction drawings to MODON municipality arm; obtain GDCD fire safety pre-approval and SASO compliance sign-off.",
+          typicalDuration: "3–4 weeks",
+        },
+        {
+          step: "Final Licence Issuance",
+          description: "MODON issues occupancy licence upon confirmation of utility agreements, safety certificates, and fee settlement.",
+          typicalDuration: "1–2 weeks",
+        },
+      ],
+      similarProjects: [
+        { name: "Riyadh DC Campus Phase 1", location: "Riyadh Industrial Zone", approvalTime: "5 months" },
+        { name: "STC Hyperscale Node", location: "Heet Industrial City", approvalTime: "4 months" },
+        { name: "NCA Government Data Center", location: "Riyadh", approvalTime: "6 months" },
+      ],
+      aiAdvice:
+        "The Heet approval path is among the fastest available in Saudi Arabia. MODON's streamlined single-window service for industrial city tenants eliminates the need for separate municipal permits. The only common delay is the SEC power connection agreement — engage SEC's large customer team early and submit your load profile at the same time as the MODON application to run both tracks in parallel. Budget 4–6 months end-to-end.",
+    },
   },
   {
     id: "site-002",
@@ -175,6 +223,56 @@ export const sites = [
       },
       aiRecommendation:
         "Al-Khair Industrial City offers strong infrastructure fundamentals with a 380 kV substation at 2.6 km and 140 MW of spare capacity. The primary constraint — a single-path 40 Gbps fiber connection — is being resolved by a contracted dual-path upgrade due Q4 2026. Infrastructure risk is low for initial deployments given existing bandwidth is sufficient for Phase 1.",
+    },
+    regulatoryDetail: {
+      requiredAgencies: [
+        { name: "MODON", role: "Industrial city occupancy licence and zoning clearance" },
+        { name: "Saudi Electricity Company (SEC)", role: "Power connection agreement and capacity reservation" },
+        { name: "NWC", role: "Water supply and TSE allocation agreement" },
+        { name: "Communications, Space & Technology Commission (CST)", role: "Telecommunications and data infrastructure licensing" },
+      ],
+      requiredPermits: [
+        "MODON Industrial Occupancy Licence",
+        "SEC Power Connection Agreement",
+        "NWC Water Allocation Permit",
+        "CST Data Facility Operating Licence",
+        "GDCD Fire Safety Certificate",
+        "SASO Technical Compliance Certificate",
+      ],
+      approvalProcess: [
+        {
+          step: "Initial Application",
+          description: "Submit project documentation to MODON including site plan, technical specifications, and utility demand schedules.",
+          typicalDuration: "2–3 weeks",
+        },
+        {
+          step: "Technical & Zoning Review",
+          description: "MODON engineering reviews load and land-use requirements; CST reviews connectivity and data sovereignty compliance.",
+          typicalDuration: "5–7 weeks",
+        },
+        {
+          step: "Utility Agreements",
+          description: "Execute SEC power connection agreement and NWC water allocation MOU. CST operating licence application submitted in parallel.",
+          typicalDuration: "5–7 weeks",
+        },
+        {
+          step: "Safety & Compliance Permits",
+          description: "GDCD fire safety pre-approval and SASO technical compliance review. Construction drawings reviewed by MODON municipality.",
+          typicalDuration: "3–5 weeks",
+        },
+        {
+          step: "Final Licence Issuance",
+          description: "MODON issues occupancy licence; CST issues operating licence upon receiving all supporting approvals.",
+          typicalDuration: "2–3 weeks",
+        },
+      ],
+      similarProjects: [
+        { name: "Riyadh East Hyperscale Campus", location: "Al-Khair Industrial City", approvalTime: "7 months" },
+        { name: "Oracle Cloud Region Riyadh", location: "Riyadh Region", approvalTime: "6 months" },
+        { name: "Alibaba Cloud KSA DC", location: "Riyadh Industrial Zone", approvalTime: "7 months" },
+      ],
+      aiAdvice:
+        "Al-Khair's approval path adds a CST data facility licence requirement compared to simpler industrial sites — this is non-negotiable for any commercial data center in Saudi Arabia. The CST review typically takes 5–7 weeks and requires a data residency and sovereignty compliance declaration. Submit CST and SEC applications simultaneously with MODON to avoid serialising this path. Allow 6–8 months end-to-end.",
     },
   },
   {
@@ -265,6 +363,63 @@ export const sites = [
       aiRecommendation:
         "Sudair has solid infrastructure headroom — 120 MW spare power on a 230 kV substation and dual-path 100 Gbps fiber at 1.9 km. The site's primary drawback is its 135 km distance from Riyadh, which adds cost and time to logistics and ongoing O&M. For a self-contained hyperscale deployment, infrastructure risk is low and manageable.",
     },
+    regulatoryDetail: {
+      requiredAgencies: [
+        { name: "MODON", role: "Industrial city occupancy licence and zoning clearance" },
+        { name: "Saudi Electricity Company (SEC)", role: "Power connection agreement and 230 kV tie-in permit" },
+        { name: "NWC", role: "Water allocation and TSE offtake agreement" },
+        { name: "Communications, Space & Technology Commission (CST)", role: "Data facility operating licence" },
+        { name: "MEWA", role: "Environmental compliance review for water extraction and usage" },
+      ],
+      requiredPermits: [
+        "MODON Industrial Occupancy Licence",
+        "SEC Power Connection Agreement",
+        "NWC Water Allocation Permit",
+        "CST Data Facility Operating Licence",
+        "MEWA Environmental No-Objection Certificate",
+        "GDCD Fire Safety Certificate",
+        "SASO Technical Standards Certificate",
+      ],
+      approvalProcess: [
+        {
+          step: "Initial Application & Site Reservation",
+          description: "Submit project brief and demand schedules to MODON. Obtain site reservation letter and begin pre-application meetings with SEC and NWC.",
+          typicalDuration: "3–4 weeks",
+        },
+        {
+          step: "Technical & Environmental Screening",
+          description: "MODON and MEWA conduct joint technical screening. MEWA assesses water demand sustainability given the 3.1 km TSE connection requirement.",
+          typicalDuration: "5–7 weeks",
+        },
+        {
+          step: "Utility Agreements",
+          description: "Negotiate SEC power connection and NWC water offtake agreements. NWC may require a written capacity reservation request given TSE connection distance.",
+          typicalDuration: "6–8 weeks",
+        },
+        {
+          step: "CST Licence Application",
+          description: "Submit data centre operating licence application to CST with data residency, sovereignty, and network resilience documentation.",
+          typicalDuration: "5–7 weeks",
+        },
+        {
+          step: "Safety & Building Permits",
+          description: "GDCD fire safety review, SASO technical compliance, and MODON municipality building permit review.",
+          typicalDuration: "4–5 weeks",
+        },
+        {
+          step: "Final Approvals",
+          description: "MODON issues occupancy licence; CST and SEC issue their respective permits upon completion of all prior stages.",
+          typicalDuration: "2–3 weeks",
+        },
+      ],
+      similarProjects: [
+        { name: "Sudair Techno Valley DC Phase 2", location: "Sudair Industrial City", approvalTime: "8 months" },
+        { name: "Google Cloud Riyadh Region", location: "Riyadh Region", approvalTime: "8 months" },
+        { name: "Azure KSA North Zone", location: "Riyadh Central", approvalTime: "7 months" },
+      ],
+      aiAdvice:
+        "The MEWA environmental review is the most likely source of delay at Sudair, specifically around the water demand assessment for the 3.1 km TSE connection. Prepare a detailed water demand management plan demonstrating TSE reuse rates and cooling efficiency targets before submitting to MEWA — this substantially shortens the review cycle. Running the CST and MEWA tracks in parallel with the MODON application saves 6–8 weeks. Budget 6–9 months total.",
+    },
   },
   {
     id: "site-004",
@@ -353,6 +508,66 @@ export const sites = [
       },
       aiRecommendation:
         "Dammam 2nd Industrial City offers the best fiber diversity of all evaluated sites — three carriers with 200 Gbps and planned subsea integration. Port access is a significant logistics advantage for large-scale hardware imports. Electrical capacity at 95 MW spare is adequate but tighter than Riyadh-region sites; early power reservation is recommended.",
+    },
+    regulatoryDetail: {
+      requiredAgencies: [
+        { name: "MODON", role: "Industrial city occupancy licence for Eastern Province zone" },
+        { name: "Saudi Electricity Company (SEC)", role: "Power connection agreement — Eastern Region grid" },
+        { name: "NWC / RCJY", role: "Water allocation from Jubail Industrial Canal under Royal Commission framework" },
+        { name: "Communications, Space & Technology Commission (CST)", role: "Data facility operating licence and network resilience certification" },
+        { name: "MEWA", role: "Environmental impact assessment for water usage and coastal proximity" },
+        { name: "Saudi Customs Authority", role: "Equipment import clearance for large server and cooling infrastructure" },
+      ],
+      requiredPermits: [
+        "MODON Industrial Occupancy Licence (Eastern Province)",
+        "SEC Power Connection Agreement",
+        "RCJY Water Allocation Permit",
+        "CST Data Facility Operating Licence",
+        "MEWA Environmental Impact Assessment Clearance",
+        "Saudi Customs Equipment Import Permit",
+        "GDCD Fire Safety Certificate",
+        "SASO Technical Compliance Certificate",
+        "Dammam Municipal Building Permit",
+      ],
+      approvalProcess: [
+        {
+          step: "Pre-Application & Stakeholder Meetings",
+          description: "Conduct pre-application meetings with MODON Eastern Region, RCJY water desk, and SEC Eastern Region. Align on water allocation capacity before formal submission.",
+          typicalDuration: "4–6 weeks",
+        },
+        {
+          step: "MODON Application & Zoning Review",
+          description: "Submit full project documentation. MODON Eastern Region reviews land use, load demand, and site plan against industrial city master plan.",
+          typicalDuration: "6–8 weeks",
+        },
+        {
+          step: "MEWA Environmental Assessment",
+          description: "Full environmental impact assessment required given coastal proximity and industrial water usage. Public consultation period may be triggered.",
+          typicalDuration: "8–10 weeks",
+        },
+        {
+          step: "Utility Agreements",
+          description: "Negotiate SEC Eastern Region power connection and RCJY water allocation agreement. Both require separate technical reviews and can run concurrently.",
+          typicalDuration: "6–8 weeks",
+        },
+        {
+          step: "CST Licence & Import Clearance",
+          description: "Submit CST data facility licence application with sovereignty and resilience documentation. Initiate Saudi Customs pre-clearance for planned equipment imports.",
+          typicalDuration: "6–7 weeks",
+        },
+        {
+          step: "Safety, Building & Final Permits",
+          description: "GDCD fire safety, SASO compliance, municipal building permit. Final coordination between MODON, CST, and SEC for simultaneous licence issuance.",
+          typicalDuration: "4–5 weeks",
+        },
+      ],
+      similarProjects: [
+        { name: "Dammam Edge Data Center", location: "Dammam Industrial Zone", approvalTime: "11 months" },
+        { name: "AWS Eastern Province Zone", location: "Eastern Province", approvalTime: "10 months" },
+        { name: "center3 Dammam Campus", location: "Dammam", approvalTime: "12 months" },
+      ],
+      aiAdvice:
+        "The two main delay risks at Dammam are the MEWA environmental assessment (especially its public consultation requirement near the coast) and the RCJY water allocation negotiation, which has its own independent approval track outside standard MODON channels. Engage RCJY directly and early — do not assume NWC handles this. Brief your EIA consultant on coastal industrial zone requirements before submission. Running SEC, RCJY, CST, and MEWA tracks concurrently after MODON intake is the only way to achieve 9–12 months rather than 15+.",
     },
   },
   {
@@ -443,6 +658,66 @@ export const sites = [
       aiRecommendation:
         "Qassim Industrial City's infrastructure is constrained at present — 45 MW of spare capacity on a 132 kV substation, single-path fiber at 20 Gbps, and a partially unpaved access road. However, the Riyadh–Qassim Backbone Feeder completion in 2026 will substantially upgrade connectivity. For deployments planned post-2026, the infrastructure profile improves significantly.",
     },
+    regulatoryDetail: {
+      requiredAgencies: [
+        { name: "MODON", role: "Industrial city occupancy licence and zoning clearance" },
+        { name: "Saudi Electricity Company (SEC)", role: "Power connection agreement — 132 kV grid capacity review" },
+        { name: "NWC", role: "Water supply MOU and TSE connection feasibility for 6.2 km line" },
+        { name: "Communications, Space & Technology Commission (CST)", role: "Data facility operating licence" },
+        { name: "MEWA", role: "Water stress assessment and environmental compliance — water-scarce region" },
+        { name: "Qassim Regional Municipality", role: "Building permit and road access upgrade approval" },
+      ],
+      requiredPermits: [
+        "MODON Industrial Occupancy Licence",
+        "SEC Power Connection Agreement",
+        "NWC Water Allocation Permit",
+        "CST Data Facility Operating Licence",
+        "MEWA Environmental No-Objection Certificate",
+        "MEWA Water Stress Zone Exemption",
+        "Qassim Municipality Building Permit",
+        "GDCD Fire Safety Certificate",
+        "SASO Technical Compliance Certificate",
+      ],
+      approvalProcess: [
+        {
+          step: "Pre-Application & Water Feasibility",
+          description: "Before formal MODON application, obtain NWC feasibility assessment for the 6.2 km TSE connection. This determines whether a water-stress zone exemption is required from MEWA.",
+          typicalDuration: "4–6 weeks",
+        },
+        {
+          step: "MODON Application & Zoning Review",
+          description: "Submit full project documentation including NWC feasibility letter and water demand justification. MODON reviews land use and load requirements.",
+          typicalDuration: "6–8 weeks",
+        },
+        {
+          step: "MEWA Environmental & Water-Stress Review",
+          description: "MEWA assesses water demand in a designated water-stress zone. A water demand management plan is mandatory. Possible site visit and public review.",
+          typicalDuration: "8–10 weeks",
+        },
+        {
+          step: "Utility Agreements",
+          description: "Negotiate SEC 132 kV connection agreement (capacity may need to be reserved against grid upgrade programme) and NWC water allocation agreement.",
+          typicalDuration: "7–9 weeks",
+        },
+        {
+          step: "CST Licence & Municipal Permits",
+          description: "Submit CST data facility application; apply to Qassim municipality for building permit and road access upgrade authorisation.",
+          typicalDuration: "6–8 weeks",
+        },
+        {
+          step: "Safety Permits & Final Approval",
+          description: "GDCD fire safety and SASO technical review. MODON issues final occupancy licence upon receipt of all utility and safety confirmations.",
+          typicalDuration: "3–4 weeks",
+        },
+      ],
+      similarProjects: [
+        { name: "Qassim University Research DC", location: "Buraydah, Qassim", approvalTime: "10 months" },
+        { name: "STC Qassim Regional Node Expansion", location: "Qassim", approvalTime: "9 months" },
+        { name: "NCA Disaster Recovery Site", location: "Qassim Region", approvalTime: "12 months" },
+      ],
+      aiAdvice:
+        "The MEWA water-stress zone designation for the Qassim region is the single biggest risk in this approval path. Projects that submitted without a pre-approved water demand management plan have experienced 3–4 month delays during MEWA review. Engage a qualified water management consultant to prepare this plan before the MODON application and submit it to MEWA in parallel. Also note that SEC's 132 kV connection may require a capacity reservation under the grid upgrade programme — obtain SEC's written capacity confirmation before finalising the site.",
+    },
   },
   {
     id: "site-006",
@@ -531,6 +806,69 @@ export const sites = [
       },
       aiRecommendation:
         "Jubail 3rd Industrial City is currently infrastructure-constrained — 35 MW spare capacity on a shared 132 kV substation, 10 Gbps industrial-only fiber, and a 7 km bypass to the highway. The RCJY Phase 3 development programme is expected to address fiber and road constraints by 2028. Re-evaluate after those improvements are confirmed.",
+    },
+    regulatoryDetail: {
+      requiredAgencies: [
+        { name: "Royal Commission for Jubail & Yanbu (RCJY)", role: "Primary approving authority — all development within Jubail Industrial City requires RCJY approval" },
+        { name: "MODON", role: "Secondary registration for MODON-zone sections of the industrial city" },
+        { name: "Saudi Electricity Company (SEC)", role: "Power connection to shared Sadara substation — requires RCJY coordination" },
+        { name: "RCJY Water Authority", role: "Water allocation from Jubail Royal Commission TSE network" },
+        { name: "Communications, Space & Technology Commission (CST)", role: "Data facility operating licence — requires RCJY network integration sign-off" },
+        { name: "MEWA", role: "Full environmental impact assessment — industrial coastal zone classification" },
+        { name: "Saudi Customs Authority", role: "Import clearance for server, cooling, and power infrastructure" },
+      ],
+      requiredPermits: [
+        "RCJY Development Permit (primary)",
+        "MODON Secondary Zone Registration",
+        "SEC Power Connection Agreement (via RCJY)",
+        "RCJY Water Allocation Certificate",
+        "CST Data Facility Operating Licence",
+        "MEWA Full Environmental Impact Assessment Clearance",
+        "Saudi Customs Equipment Import Permit",
+        "GDCD Fire Safety Certificate",
+        "SASO Technical Compliance Certificate",
+        "RCJY Industrial Safety Compliance Certificate",
+        "Port Authority Access Permit (Jubail Commercial Port)",
+      ],
+      approvalProcess: [
+        {
+          step: "RCJY Pre-Application Consultation",
+          description: "Mandatory pre-consultation with RCJY Planning & Development Authority. RCJY determines whether the site falls within their direct jurisdiction or MODON's — this affects the entire approval path.",
+          typicalDuration: "4–6 weeks",
+        },
+        {
+          step: "Environmental Impact Assessment",
+          description: "Full MEWA EIA mandatory for any development in Jubail coastal industrial zone. EIA must address water demand, industrial runoff, and cumulative coastal impact. Public consultation period included.",
+          typicalDuration: "10–14 weeks",
+        },
+        {
+          step: "RCJY Technical & Land-Use Review",
+          description: "RCJY engineering and planning division reviews the project against the Jubail Industrial City master plan. Requires EIA clearance before proceeding.",
+          typicalDuration: "7–9 weeks",
+        },
+        {
+          step: "Utility Agreements",
+          description: "SEC power agreement requires RCJY sign-off on shared substation capacity. RCJY Water Authority issues water allocation certificate separately from NWC.",
+          typicalDuration: "8–10 weeks",
+        },
+        {
+          step: "CST Licence & Safety Permits",
+          description: "Submit CST data facility licence; GDCD fire safety and SASO technical compliance reviews. RCJY Industrial Safety office conducts independent safety inspection.",
+          typicalDuration: "6–8 weeks",
+        },
+        {
+          step: "RCJY Final Development Permit",
+          description: "RCJY issues the primary development permit only after all preceding approvals are confirmed. MODON secondary registration follows within 2 weeks.",
+          typicalDuration: "3–4 weeks",
+        },
+      ],
+      similarProjects: [
+        { name: "Jubail Industrial City Data Hub", location: "Jubail 1st Industrial City", approvalTime: "16 months" },
+        { name: "SABIC Digital Operations Centre", location: "Jubail", approvalTime: "14 months" },
+        { name: "Gulf Data Hub Jubail", location: "Eastern Province", approvalTime: "18 months" },
+      ],
+      aiAdvice:
+        "RCJY approval is fundamentally different from a standard MODON process — RCJY acts as a quasi-sovereign authority within Jubail and all utility agreements must be routed through them, not directly through NWC or SEC. The MEWA EIA for the Jubail coastal zone is the longest single step (10–14 weeks) and cannot be shortened. Start the EIA immediately after the RCJY pre-consultation. Do not begin any other approval track until you have RCJY's formal confirmation of which zone classification applies to your specific plot — the answer changes the permit list significantly.",
     },
   },
   {
@@ -621,6 +959,67 @@ export const sites = [
       aiRecommendation:
         "Afif Technology Industrial Zone has critical infrastructure deficiencies. 8 MW of available power on a 33 kV rural feeder is insufficient for any meaningful data center load, and the complete absence of fiber connectivity is a fundamental barrier. Significant capital investment in transmission infrastructure and fiber deployment would be required before this site is viable.",
     },
+    regulatoryDetail: {
+      requiredAgencies: [
+        { name: "MEWA", role: "Water-stress zone assessment, water usage permit, and environmental compliance for undeveloped desert region" },
+        { name: "Saudi Electricity Company (SEC)", role: "Rural grid capacity assessment and transmission upgrade agreement — 33 kV to minimum 132 kV upgrade required" },
+        { name: "NWC", role: "Water infrastructure extension feasibility for 14.3 km TSE connection" },
+        { name: "Afif Municipal Council", role: "Building permit and road access development approval" },
+        { name: "Communications, Space & Technology Commission (CST)", role: "Data facility operating licence and connectivity infrastructure review" },
+        { name: "Ministry of Transport and Logistic Services", role: "Road construction permit for 12 km access road upgrade" },
+      ],
+      requiredPermits: [
+        "MEWA Water Usage Permit (Water-Stress Zone)",
+        "MEWA Environmental Clearance Certificate",
+        "SEC Rural Grid Capacity Upgrade Agreement",
+        "NWC Water Infrastructure Extension Agreement",
+        "CST Data Facility Operating Licence",
+        "Afif Municipal Building Permit",
+        "Ministry of Transport Road Construction Permit",
+        "GDCD Fire Safety Certificate",
+        "SASO Technical Compliance Certificate",
+        "NCA Security Clearance for Remote Facility",
+      ],
+      approvalProcess: [
+        {
+          step: "Pre-Feasibility & Infrastructure Assessment",
+          description: "Before any formal application, SEC must confirm whether a 33→132 kV grid upgrade is feasible and on what timeline. NWC must confirm TSE extension feasibility. Both are prerequisites — proceed only if both are positive.",
+          typicalDuration: "8–12 weeks",
+        },
+        {
+          step: "MEWA Water & Environmental Review",
+          description: "Full water-stress zone assessment and environmental impact study for undeveloped desert region. Includes soil and groundwater impact analysis. Extended public consultation likely.",
+          typicalDuration: "12–16 weeks",
+        },
+        {
+          step: "Infrastructure Upgrade Agreements",
+          description: "Negotiate SEC grid upgrade agreement (applicant may need to partially fund transmission works) and NWC water extension agreement. Road construction permit from Ministry of Transport.",
+          typicalDuration: "10–12 weeks",
+        },
+        {
+          step: "Municipal & Planning Approvals",
+          description: "Afif Municipal Council building permit and land-use change approval. NCA security clearance for remote desert facility.",
+          typicalDuration: "6–8 weeks",
+        },
+        {
+          step: "CST & Safety Permits",
+          description: "CST data facility licence (may require connectivity infrastructure investment commitment). GDCD and SASO compliance reviews.",
+          typicalDuration: "6–8 weeks",
+        },
+        {
+          step: "Final Permit Coordination",
+          description: "No single authority coordinates final issuance — applicant must independently confirm each permit and compile a full permit register before commencing construction.",
+          typicalDuration: "4–6 weeks",
+        },
+      ],
+      similarProjects: [
+        { name: "Remote Military Logistics Facility", location: "Afif Region", approvalTime: "18 months" },
+        { name: "NCA Backup Data Facility", location: "Remote Riyadh Region", approvalTime: "20 months" },
+        { name: "Solar-Powered Agricultural Complex", location: "Afif", approvalTime: "16 months" },
+      ],
+      aiAdvice:
+        "This site's regulatory path is long because the absence of existing infrastructure forces applicants through utility upgrade agreements that are normally pre-solved in a developed industrial city. The SEC grid upgrade agreement is the critical path item — the 33→132 kV upgrade requires SEC board approval and can take 6 months on its own. Do not start formal permit applications until SEC has confirmed grid upgrade feasibility in writing. If SEC confirms unfeasibility, the site should be abandoned. Budget 14–20 months minimum.",
+    },
   },
   {
     id: "site-008",
@@ -709,6 +1108,71 @@ export const sites = [
       },
       aiRecommendation:
         "Wadi Al-Dawasir Industrial Park is not viable for data center development under current or foreseeable infrastructure conditions. 3 MW on a 33 kV feeder 15.6 km away, satellite-only connectivity, and a 28 km desert track as the sole access route represent a fundamental infrastructure deficit. This site is not recommended.",
+    },
+    regulatoryDetail: {
+      requiredAgencies: [
+        { name: "MEWA", role: "Aquifer depletion and water-scarcity zone assessment — mandatory given fossil aquifer dependency" },
+        { name: "Saudi Electricity Company (SEC)", role: "Major grid upgrade agreement — 33 kV to minimum 132 kV transmission extension required" },
+        { name: "NWC", role: "Assessment of 22.1 km water supply extension feasibility and aquifer impact" },
+        { name: "Wadi Al-Dawasir Municipal Council", role: "Land-use change approval from agricultural to industrial and building permit" },
+        { name: "Communications, Space & Technology Commission (CST)", role: "Data facility licence — satellite-only connectivity will require special waiver or terrestrial upgrade commitment" },
+        { name: "Ministry of Transport and Logistic Services", role: "28 km paved road construction permit and ROW acquisition" },
+        { name: "Ministry of Municipal and Rural Affairs (MOMRA)", role: "Zone reclassification from rural agricultural to industrial" },
+        { name: "National Cybersecurity Authority (NCA)", role: "Remote facility security clearance and sovereign data protection compliance" },
+      ],
+      requiredPermits: [
+        "MEWA Aquifer Impact Assessment Clearance",
+        "MEWA Water-Scarcity Zone Development Permit",
+        "SEC Major Grid Extension Agreement",
+        "NWC Water Infrastructure Extension Agreement",
+        "CST Data Facility Operating Licence (with connectivity waiver)",
+        "MOMRA Zone Reclassification Permit",
+        "Wadi Al-Dawasir Municipal Building Permit",
+        "Ministry of Transport Road Construction Permit",
+        "NCA Remote Facility Security Clearance",
+        "GDCD Fire Safety Certificate",
+        "SASO Technical Compliance Certificate",
+        "Saudi Customs Equipment Import Permit",
+      ],
+      approvalProcess: [
+        {
+          step: "Aquifer & Grid Pre-Feasibility",
+          description: "Commission an independent aquifer depletion study for MEWA and request SEC feasibility confirmation for 33→132 kV extension to Wadi Al-Dawasir. Both are hard gates — if either is negative, abandon the site.",
+          typicalDuration: "10–14 weeks",
+        },
+        {
+          step: "MOMRA Zone Reclassification",
+          description: "Apply to MOMRA for industrial zone reclassification. This requires a development justification and economic impact assessment. Extended review cycle for remote regions.",
+          typicalDuration: "12–16 weeks",
+        },
+        {
+          step: "MEWA Environmental & Aquifer Review",
+          description: "Full EIA including aquifer depletion modelling, water scarcity zone impact, and climate risk assessment. Public consultation is mandatory. Likely the longest single step.",
+          typicalDuration: "14–18 weeks",
+        },
+        {
+          step: "Infrastructure Upgrade Agreements",
+          description: "Negotiate SEC grid extension (applicant funds majority), NWC water extension agreement, and Ministry of Transport road construction ROW and permit.",
+          typicalDuration: "12–14 weeks",
+        },
+        {
+          step: "CST, NCA & Municipal Permits",
+          description: "CST data facility licence with satellite connectivity waiver application; NCA remote facility security clearance; Wadi Al-Dawasir municipal building permit.",
+          typicalDuration: "8–10 weeks",
+        },
+        {
+          step: "Safety Permits & Final Registration",
+          description: "GDCD fire safety and SASO technical compliance. Final permit register compilation and verification. No central coordination — each permit authority issues independently.",
+          typicalDuration: "5–6 weeks",
+        },
+      ],
+      similarProjects: [
+        { name: "Remote Aramco Pumping Station Facility", location: "Southern Riyadh Region", approvalTime: "22 months" },
+        { name: "Rural Solar Power Generation Facility", location: "Wadi Al-Dawasir", approvalTime: "20 months" },
+        { name: "Ministry Agricultural Research Station", location: "Wadi Al-Dawasir", approvalTime: "24 months" },
+      ],
+      aiAdvice:
+        "Wadi Al-Dawasir has the longest and most uncertain approval path of all evaluated sites. The MOMRA zone reclassification and MEWA aquifer review can run concurrently but together take 6–8 months before any other permit can be issued — and both carry significant rejection risk. The SEC grid extension is estimated to cost the applicant SAR 120–180M in infrastructure funding and requires a separate SEC board approval. This site should not be pursued unless it is the only viable option for the specific use case, and even then a thorough pre-feasibility must confirm the SEC and aquifer gates before any significant investment is made.",
     },
   },
 ];
