@@ -32,11 +32,16 @@ import {
   ChevronDown,
   ChevronUp,
   MessageSquare,
+  CheckCircle,
+  ChevronDown as ChevronDownIcon,
+  Plus,
+  X,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { waterInfrastructure } from '../data/waterInfrastructure';
+import { getSitesSortedByScore, getSiteById } from '../data/sites';
 import { getDocumentsForSite } from '../data/siteDocuments';
 
 /* ─── types ──────────────────────────────────────────────── */
@@ -1371,6 +1376,275 @@ function ForecastTab({ site }: { site: Site }) {
   );
 }
 
+/* ─── Compare tab ─────────────────────────────────────────── */
+type ComplexityLevel = 'Low' | 'Medium' | 'High';
+type PowerLevel = 'High' | 'Medium' | 'Low';
+
+function coolingCompat(powerAvailability: string): string {
+  if (powerAvailability === 'High')   return 'All types';
+  if (powerAvailability === 'Medium') return 'Air / Liquid / DLC';
+  return 'Air only';
+}
+
+// Returns the indices of sites with the "best" value for a given row.
+function bestIndices(values: (number | string)[], higherIsBetter: boolean, isComplexity: boolean): number[] {
+  if (isComplexity) {
+    const order: ComplexityLevel[] = ['Low', 'Medium', 'High'];
+    const best = Math.min(...values.map(v => order.indexOf(v as ComplexityLevel)));
+    return values.map((v, i) => order.indexOf(v as ComplexityLevel) === best ? i : -1).filter(i => i !== -1);
+  }
+  if (typeof values[0] === 'string') {
+    // power level or cooling: build ordinal
+    const powerOrder: PowerLevel[] = ['High', 'Medium', 'Low'];
+    const coolingOrder = ['All types', 'Air / Liquid / DLC', 'Air only'];
+    const order = powerOrder.includes(values[0] as PowerLevel) ? powerOrder : coolingOrder;
+    const best = Math.min(...values.map(v => order.indexOf(v as string)));
+    return values.map((v, i) => order.indexOf(v as string) === best ? i : -1).filter(i => i !== -1);
+  }
+  const nums = values as number[];
+  const extremum = higherIsBetter ? Math.max(...nums) : Math.min(...nums);
+  return nums.map((v, i) => v === extremum ? i : -1).filter(i => i !== -1);
+}
+
+interface CompareRow {
+  label: string;
+  getValue: (s: Site) => number | string;
+  higherIsBetter: boolean;
+  isComplexity?: boolean;
+  format?: (v: number | string) => string;
+}
+
+const COMPARE_ROWS: CompareRow[] = [
+  {
+    label: 'Water Score',
+    getValue: s => s.waterAccess.score,
+    higherIsBetter: true,
+    format: v => `${v} / 100`,
+  },
+  {
+    label: 'Infrastructure Score',
+    getValue: s => s.infrastructure.score,
+    higherIsBetter: true,
+    format: v => `${v} / 100`,
+  },
+  {
+    label: 'Regulatory Complexity',
+    getValue: s => s.regulatory.complexityLevel,
+    higherIsBetter: false,
+    isComplexity: true,
+  },
+  {
+    label: 'Future Score (2030)',
+    getValue: s => {
+      const proj = (s as any).forecastDetail?.scoreProjection;
+      return proj ? proj[proj.length - 1].score : s.overallScore;
+    },
+    higherIsBetter: true,
+    format: v => `${v} / 100`,
+  },
+  {
+    label: 'Power Availability',
+    getValue: s => s.infrastructure.powerAvailability,
+    higherIsBetter: true,
+  },
+  {
+    label: 'Cooling Compatibility',
+    getValue: s => coolingCompat(s.infrastructure.powerAvailability),
+    higherIsBetter: true,
+  },
+];
+
+function CompareTab({ site }: { site: Site }) {
+  const [comparedIds, setComparedIds] = useState<string[]>([]);
+  const [selectorOpen, setSelectorOpen] = useState(false);
+  const allSites = getSitesSortedByScore() as Site[];
+
+  const comparedSites = comparedIds.map(id => getSiteById(id) as Site).filter(Boolean);
+  const columns: Site[] = [site, ...comparedSites];
+  const availableToAdd = allSites.filter(s => s.id !== site.id && !comparedIds.includes(s.id));
+  const canAddMore = comparedIds.length < 2;
+
+  function addSite(id: string) {
+    if (canAddMore) setComparedIds(prev => [...prev, id]);
+    setSelectorOpen(false);
+  }
+  function removeSite(id: string) {
+    setComparedIds(prev => prev.filter(x => x !== id));
+  }
+
+  // cell appearance helpers
+  function complexityStyle(val: string) {
+    if (val === 'Low')    return { text: 'text-[#10B981]', bg: 'bg-[#10B981]/10', border: 'border-[#10B981]/30' };
+    if (val === 'Medium') return { text: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/30' };
+    return                       { text: 'text-red-400',    bg: 'bg-red-500/10',    border: 'border-red-500/30' };
+  }
+  function powerStyle(val: string) {
+    if (val === 'High')   return 'text-[#10B981]';
+    if (val === 'Medium') return 'text-amber-400';
+    return 'text-red-400';
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+
+      {/* ── Add site selector ── */}
+      <div className="flex items-center gap-3">
+        <div className="relative">
+          <button
+            onClick={() => canAddMore && setSelectorOpen(o => !o)}
+            disabled={!canAddMore}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-[13px] font-medium transition-colors ${
+              canAddMore
+                ? 'bg-[#0D1424] border-[#1F2937] text-[#9CA3AF] hover:border-[#374151] hover:text-[#D1D5DB] cursor-pointer'
+                : 'bg-[#0D1424] border-[#1F2937] text-[#374151] cursor-not-allowed'
+            }`}
+          >
+            <Plus className="w-3.5 h-3.5" />
+            {canAddMore ? 'Add site to compare' : 'Max 2 sites added'}
+            {canAddMore && <ChevronDownIcon className={`w-3.5 h-3.5 transition-transform ${selectorOpen ? 'rotate-180' : ''}`} />}
+          </button>
+
+          {selectorOpen && (
+            <div className="absolute top-full left-0 mt-1 z-30 bg-[#111827] border border-[#1F2937] rounded-xl shadow-2xl w-72 overflow-hidden">
+              {availableToAdd.length === 0 ? (
+                <p className="text-[12px] text-[#4B5563] px-4 py-3">All other sites already added.</p>
+              ) : (
+                <div className="max-h-56 overflow-y-auto">
+                  {availableToAdd.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => addSite(s.id)}
+                      className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-[#1F2937] transition-colors border-b border-[#1F2937]/50 last:border-0"
+                    >
+                      <div>
+                        <p className="text-[13px] font-medium text-white">{s.name}</p>
+                        <p className="text-[11px] text-[#6B7280]">{s.region} · Score {s.overallScore}</p>
+                      </div>
+                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${scoreColors(s.overallScore).bg} ${scoreColors(s.overallScore).text} ${scoreColors(s.overallScore).border} border`}>
+                        {s.overallScore}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* chips of currently compared sites */}
+        {comparedSites.map(s => (
+          <div key={s.id} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0D1424] border border-[#1F2937] rounded-xl">
+            <span className="text-[12px] text-[#9CA3AF] font-medium truncate max-w-[120px]">{s.name}</span>
+            <button onClick={() => removeSite(s.id)} className="text-[#4B5563] hover:text-[#9CA3AF] transition-colors flex-shrink-0">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ))}
+
+        {/* dismiss dropdown on outside click */}
+        {selectorOpen && (
+          <div className="fixed inset-0 z-20" onClick={() => setSelectorOpen(false)} />
+        )}
+      </div>
+
+      {/* ── Comparison table ── */}
+      {columns.length === 1 ? (
+        <div className="flex flex-col items-center justify-center gap-2 py-10 bg-[#0D1424] border border-[#1F2937] rounded-xl">
+          <p className="text-[#4B5563] text-sm">Add at least one site above to start comparing.</p>
+        </div>
+      ) : (
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl overflow-hidden">
+          <table className="w-full text-[13px]">
+            <thead>
+              <tr className="border-b border-[#1F2937]">
+                <th className="text-left text-[11px] font-medium text-[#6B7280] px-4 py-3 w-[160px]">Metric</th>
+                {columns.map((col, ci) => (
+                  <th key={col.id} className="px-4 py-3 text-left">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className={`text-[12px] font-semibold leading-snug ${ci === 0 ? 'text-[#10B981]' : 'text-white'}`}>
+                          {col.name}
+                          {ci === 0 && <span className="ml-1.5 text-[10px] font-medium text-[#6B7280]">(current)</span>}
+                        </p>
+                        <p className="text-[10px] text-[#6B7280] mt-0.5">{col.region} · {col.overallScore} pts</p>
+                      </div>
+                      {ci > 0 && (
+                        <button
+                          onClick={() => removeSite(col.id)}
+                          className="text-[#374151] hover:text-[#9CA3AF] transition-colors flex-shrink-0 mt-0.5"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARE_ROWS.map((row, ri) => {
+                const values = columns.map(c => row.getValue(c));
+                const winners = bestIndices(values, row.higherIsBetter, !!row.isComplexity);
+                return (
+                  <tr key={ri} className={`border-b border-[#1F2937]/50 last:border-0 ${ri % 2 === 0 ? '' : 'bg-[#111827]/40'}`}>
+                    <td className="px-4 py-3 text-[12px] font-medium text-[#9CA3AF] whitespace-nowrap">
+                      {row.label}
+                    </td>
+                    {columns.map((col, ci) => {
+                      const val = values[ci];
+                      const isWinner = winners.includes(ci);
+                      const display = row.format ? row.format(val) : String(val);
+
+                      /* Complexity badge */
+                      if (row.isComplexity) {
+                        const cs = complexityStyle(val as string);
+                        return (
+                          <td key={col.id} className={`px-4 py-3 ${isWinner ? 'bg-[#10B981]/5' : ''}`}>
+                            <div className="flex items-center gap-2">
+                              <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${cs.text} ${cs.bg} ${cs.border}`}>
+                                {val}
+                              </span>
+                              {isWinner && <CheckCircle className="w-3.5 h-3.5 text-[#10B981] flex-shrink-0" />}
+                            </div>
+                          </td>
+                        );
+                      }
+
+                      /* Power / cooling text */
+                      if (typeof val === 'string') {
+                        return (
+                          <td key={col.id} className={`px-4 py-3 ${isWinner ? 'bg-[#10B981]/5' : ''}`}>
+                            <div className="flex items-center gap-2">
+                              <span className={powerStyle(val as string)}>{display}</span>
+                              {isWinner && <CheckCircle className="w-3.5 h-3.5 text-[#10B981] flex-shrink-0" />}
+                            </div>
+                          </td>
+                        );
+                      }
+
+                      /* Numeric score */
+                      return (
+                        <td key={col.id} className={`px-4 py-3 ${isWinner ? 'bg-[#10B981]/5' : ''}`}>
+                          <div className="flex items-center gap-2">
+                            <span className={`font-semibold ${isWinner ? 'text-[#10B981]' : 'text-[#D1D5DB]'}`}>
+                              {display}
+                            </span>
+                            {isWinner && <CheckCircle className="w-3.5 h-3.5 text-[#10B981] flex-shrink-0" />}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Documents tab ───────────────────────────────────────── */
 const DOC_TYPE_ICONS: Record<string, React.ElementType> = {
   'National Strategy':            Shield,
@@ -1570,7 +1844,8 @@ export function SiteDetail({ site, onNavigateToChat }: SiteDetailProps) {
         {activeTab === 'Cooling Impact' && <CoolingTab site={site} />}
         {activeTab === 'Forecast' && <ForecastTab site={site} />}
         {activeTab === 'Documents' && <DocumentsTab site={site} onNavigateToChat={onNavigateToChat} />}
-        {activeTab !== 'Overview' && activeTab !== 'Water Access' && activeTab !== 'Infrastructure' && activeTab !== 'Regulatory' && activeTab !== 'Cooling Impact' && activeTab !== 'Forecast' && activeTab !== 'Documents' && <PlaceholderTab name={activeTab} />}
+        {activeTab === 'Compare' && <CompareTab site={site} />}
+        {activeTab !== 'Overview' && activeTab !== 'Water Access' && activeTab !== 'Infrastructure' && activeTab !== 'Regulatory' && activeTab !== 'Cooling Impact' && activeTab !== 'Forecast' && activeTab !== 'Documents' && activeTab !== 'Compare' && <PlaceholderTab name={activeTab} />}
       </div>
     </div>
   );
