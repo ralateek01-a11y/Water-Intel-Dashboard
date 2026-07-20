@@ -141,6 +141,29 @@ export const sites = [
       aiAdvice:
         "The Heet approval path is among the fastest available in Saudi Arabia. MODON's streamlined single-window service for industrial city tenants eliminates the need for separate municipal permits. The only common delay is the SEC power connection agreement — engage SEC's large customer team early and submit your load profile at the same time as the MODON application to run both tracks in parallel. Budget 4–6 months end-to-end.",
     },
+    forecastDetail: {
+      plannedDesalinationPlants: [
+        { name: "Riyadh West Desalination Plant — Phase 2", expectedCapacity: "150,000 m3/day", expectedYear: 2027 },
+      ],
+      plannedTSEExpansions: [
+        { name: "Heet Industrial City TSE Plant — Phase 2 Expansion", expectedCapacity: "85,000 m3/day", expectedYear: 2026 },
+        { name: "Riyadh TSE Ring Pipeline Extension (Northern Arc)", expectedCapacity: "+200,000 m3/day throughput", expectedYear: 2028 },
+      ],
+      infrastructureInvestments: [
+        { name: "Heet Substation H-7 Capacity Upgrade (380→500 kV)", amount: "SAR 420M", year: 2026 },
+        { name: "STC/Mobily 400 Gbps Fiber Ring Extension to Heet", amount: "SAR 85M", year: 2026 },
+        { name: "MODON Industrial City Phase 3 Expansion", amount: "SAR 1.2B", year: 2027 },
+        { name: "Riyadh Water Security Master Plan — Northern Zone", amount: "SAR 3.8B", year: 2028 },
+      ],
+      scoreProjection: [
+        { year: 2025, score: 92 },
+        { year: 2026, score: 94 },
+        { year: 2028, score: 96 },
+        { year: 2030, score: 97 },
+      ],
+      aiPrediction:
+        "Heet Industrial City is on track to consolidate its position as the top-ranked data center site in Saudi Arabia. The Phase 2 TSE expansion arriving in 2026 will increase available water capacity by over 60%, effectively eliminating the site's only current bottleneck. The Riyadh TSE Ring Pipeline extension in 2028 adds a second high-volume supply path, reducing single-source risk to near zero. Power upgrades are funded and contracted. Score is projected to reach 96–97 by 2030, constrained only by the practical ceiling of a mature, well-served industrial site.",
+    },
   },
   {
     id: "site-002",
@@ -285,6 +308,29 @@ export const sites = [
       ],
       aiAdvice:
         "Al-Khair's approval path adds a CST data facility licence requirement compared to simpler industrial sites — this is non-negotiable for any commercial data center in Saudi Arabia. The CST review typically takes 5–7 weeks and requires a data residency and sovereignty compliance declaration. Submit CST and SEC applications simultaneously with MODON to avoid serialising this path. Allow 6–8 months end-to-end.",
+    },
+    forecastDetail: {
+      plannedDesalinationPlants: [
+        { name: "Eastern Riyadh Regional Desalination Hub", expectedCapacity: "100,000 m3/day", expectedYear: 2027 },
+      ],
+      plannedTSEExpansions: [
+        { name: "Al-Khair TSE Plant — Phase 2 Expansion", expectedCapacity: "70,000 m3/day", expectedYear: 2026 },
+        { name: "Riyadh Smart Water Network — Eastern Spur", expectedCapacity: "+120,000 m3/day", expectedYear: 2028 },
+      ],
+      infrastructureInvestments: [
+        { name: "Al-Khair Dual-Path Fiber Upgrade (STC secondary route)", amount: "SAR 65M", year: 2026 },
+        { name: "Eastern Ring Road Industrial Zone Access Expansion", amount: "SAR 280M", year: 2027 },
+        { name: "SEC Riyadh East Grid Reinforcement Programme", amount: "SAR 550M", year: 2027 },
+        { name: "NWC Riyadh Smart Water Network Phase 2", amount: "SAR 2.1B", year: 2028 },
+      ],
+      scoreProjection: [
+        { year: 2025, score: 85 },
+        { year: 2026, score: 87 },
+        { year: 2028, score: 90 },
+        { year: 2030, score: 93 },
+      ],
+      aiPrediction:
+        "Al-Khair Industrial City is approaching a step-change in its infrastructure profile. The dual-path fiber upgrade contracted for Q4 2026 resolves the site's most significant current weakness; once delivered, the connectivity score moves from constrained to best-in-class. The Phase 2 TSE expansion adds 70,000 m3/day of additional treated water capacity, and the Eastern Riyadh Desalination Hub in 2027 will provide a high-volume backup supply. Score is projected to reach 90–93 by 2030, closing the gap with Heet meaningfully.",
     },
   },
   {
@@ -437,6 +483,29 @@ export const sites = [
       ],
       aiAdvice:
         "The MEWA environmental review is the most likely source of delay at Sudair, specifically around the water demand assessment for the 3.1 km TSE connection. Prepare a detailed water demand management plan demonstrating TSE reuse rates and cooling efficiency targets before submitting to MEWA — this substantially shortens the review cycle. Running the CST and MEWA tracks in parallel with the MODON application saves 6–8 weeks. Budget 6–9 months total.",
+    },
+    forecastDetail: {
+      plannedDesalinationPlants: [
+        { name: "Sudair Regional Desalination Booster Station", expectedCapacity: "60,000 m3/day", expectedYear: 2028 },
+      ],
+      plannedTSEExpansions: [
+        { name: "Sudair Industrial City TSE Reservoir Completion", expectedCapacity: "20,000 m3/day additional storage", expectedYear: 2026 },
+        { name: "Riyadh–Qassim Backbone TSE Offtake at Sudair Junction", expectedCapacity: "+100,000 m3/day access", expectedYear: 2027 },
+      ],
+      infrastructureInvestments: [
+        { name: "Riyadh–Qassim Backbone Fiber Completion (STC)", amount: "SAR 1.1B", year: 2026 },
+        { name: "Highway 65 Industrial Zone Interchange Upgrade", amount: "SAR 190M", year: 2026 },
+        { name: "Sudair Techno Valley Infrastructure Programme Phase 2", amount: "SAR 850M", year: 2027 },
+        { name: "SWCC Sudair Water Security Investment", amount: "SAR 640M", year: 2028 },
+      ],
+      scoreProjection: [
+        { year: 2025, score: 78 },
+        { year: 2026, score: 80 },
+        { year: 2028, score: 83 },
+        { year: 2030, score: 86 },
+      ],
+      aiPrediction:
+        "Sudair Industrial City has a solid medium-term trajectory. The Riyadh–Qassim Backbone fiber completion in 2026 upgrades the site's connectivity significantly and feeds directly into the Sudair node; this alone is expected to add 2–3 points to the score. The TSE reservoir and Backbone offtake together address the 3.1 km water connection distance — the site's primary risk factor. By 2030, Sudair is projected to score 86, positioning it as a credible second-tier site behind Heet and Al-Khair.",
     },
   },
   {
@@ -593,6 +662,29 @@ export const sites = [
       aiAdvice:
         "The two main delay risks at Dammam are the MEWA environmental assessment (especially its public consultation requirement near the coast) and the RCJY water allocation negotiation, which has its own independent approval track outside standard MODON channels. Engage RCJY directly and early — do not assume NWC handles this. Brief your EIA consultant on coastal industrial zone requirements before submission. Running SEC, RCJY, CST, and MEWA tracks concurrently after MODON intake is the only way to achieve 9–12 months rather than 15+.",
     },
+    forecastDetail: {
+      plannedDesalinationPlants: [
+        { name: "Jubail Phase 3 Desalination Plant Expansion", expectedCapacity: "+200,000 m3/day incremental", expectedYear: 2027 },
+        { name: "Eastern Province Coastal Desalination Hub", expectedCapacity: "500,000 m3/day", expectedYear: 2030 },
+      ],
+      plannedTSEExpansions: [
+        { name: "Dammam Eastern TSE Ring Extension", expectedCapacity: "55,000 m3/day", expectedYear: 2027 },
+      ],
+      infrastructureInvestments: [
+        { name: "SEC Eastern Region Grid Reinforcement Programme", amount: "SAR 1.6B", year: 2026 },
+        { name: "Eastern Province Subsea Cable Landing Station", amount: "SAR 2.3B", year: 2027 },
+        { name: "Dammam 2nd Industrial City Phase 4 Expansion", amount: "SAR 4.8B", year: 2028 },
+        { name: "SWCC Eastern Province Desalination Integration Network", amount: "SAR 3.1B", year: 2029 },
+      ],
+      scoreProjection: [
+        { year: 2025, score: 71 },
+        { year: 2026, score: 72 },
+        { year: 2028, score: 75 },
+        { year: 2030, score: 77 },
+      ],
+      aiPrediction:
+        "Dammam 2nd Industrial City's forecast improvement is real but modest — the Eastern Province's infrastructure expansion programme is large and well-funded, but much of it addresses the region's existing industrial base rather than creating new data center headroom. The Jubail Phase 3 desalination expansion in 2027 will ease the water supply pressure, and the subsea cable landing station in 2027 is a major connectivity upgrade. However, water allocation constraints under RCJY and the tighter 95 MW spare power capacity remain partial bottlenecks through 2030.",
+    },
   },
   {
     id: "site-005",
@@ -747,6 +839,29 @@ export const sites = [
       ],
       aiAdvice:
         "The MEWA water-stress zone designation for the Qassim region is the single biggest risk in this approval path. Projects that submitted without a pre-approved water demand management plan have experienced 3–4 month delays during MEWA review. Engage a qualified water management consultant to prepare this plan before the MODON application and submit it to MEWA in parallel. Also note that SEC's 132 kV connection may require a capacity reservation under the grid upgrade programme — obtain SEC's written capacity confirmation before finalising the site.",
+    },
+    forecastDetail: {
+      plannedDesalinationPlants: [
+        { name: "Qassim Regional Desalination Booster Station", expectedCapacity: "45,000 m3/day", expectedYear: 2027 },
+      ],
+      plannedTSEExpansions: [
+        { name: "Buraydah Municipal TSE Network — Phase 2 Expansion", expectedCapacity: "35,000 m3/day", expectedYear: 2026 },
+        { name: "Qassim Integrated TSE Hub", expectedCapacity: "60,000 m3/day", expectedYear: 2028 },
+      ],
+      infrastructureInvestments: [
+        { name: "Riyadh–Qassim Backbone Fiber Completion (STC)", amount: "SAR 1.1B", year: 2026 },
+        { name: "Qassim Industrial City Access Road Upgrade", amount: "SAR 95M", year: 2026 },
+        { name: "SEC Q-5 Substation Upgrade to 230 kV", amount: "SAR 380M", year: 2028 },
+        { name: "MEWA Qassim Water Security Programme", amount: "SAR 1.4B", year: 2029 },
+      ],
+      scoreProjection: [
+        { year: 2025, score: 63 },
+        { year: 2026, score: 64 },
+        { year: 2028, score: 67 },
+        { year: 2030, score: 71 },
+      ],
+      aiPrediction:
+        "Qassim Industrial City's trajectory is meaningful but gated on infrastructure delivery timing. The Riyadh–Qassim Backbone fiber completion in 2026 is the highest-impact near-term event — it solves the connectivity constraint entirely. The SEC substation upgrade to 230 kV in 2028 will roughly triple available power capacity, which is the most important improvement for data center viability. Water remains a structural constraint through at least 2027; the Qassim Integrated TSE Hub in 2028 is the key inflection. Score is projected to reach 71 by 2030, making this a viable site for post-2028 developments.",
     },
   },
   {
@@ -906,6 +1021,28 @@ export const sites = [
       aiAdvice:
         "RCJY approval is fundamentally different from a standard MODON process — RCJY acts as a quasi-sovereign authority within Jubail and all utility agreements must be routed through them, not directly through NWC or SEC. The MEWA EIA for the Jubail coastal zone is the longest single step (10–14 weeks) and cannot be shortened. Start the EIA immediately after the RCJY pre-consultation. Do not begin any other approval track until you have RCJY's formal confirmation of which zone classification applies to your specific plot — the answer changes the permit list significantly.",
     },
+    forecastDetail: {
+      plannedDesalinationPlants: [
+        { name: "Jubail Phase 3 Desalination Expansion", expectedCapacity: "+200,000 m3/day incremental", expectedYear: 2027 },
+      ],
+      plannedTSEExpansions: [
+        { name: "RCJY Jubail 3rd Zone TSE Phase 3 Network", expectedCapacity: "45,000 m3/day", expectedYear: 2028 },
+      ],
+      infrastructureInvestments: [
+        { name: "RCJY Jubail Phase 3 Industrial City Development Programme", amount: "SAR 18B", year: 2028 },
+        { name: "Jubail Commercial Port Phase 2 Expansion", amount: "SAR 3.2B", year: 2027 },
+        { name: "Jubail 3rd Zone Commercial Dual-Path Fiber Deployment", amount: "SAR 450M", year: 2028 },
+        { name: "Sadara Substation Capacity Expansion (shared)", amount: "SAR 680M", year: 2029 },
+      ],
+      scoreProjection: [
+        { year: 2025, score: 55 },
+        { year: 2026, score: 56 },
+        { year: 2028, score: 59 },
+        { year: 2030, score: 63 },
+      ],
+      aiPrediction:
+        "Jubail 3rd Industrial City's improvement depends almost entirely on the RCJY Phase 3 development programme, a SAR 18B investment that begins substantive delivery from 2028. Until then, the site's infrastructure profile changes minimally — the 2026 score barely moves because the Phase 3 works are in procurement and design. The commercial fiber deployment in 2028 solves the current industrial-only 10 Gbps constraint, and the TSE Phase 3 network brings water availability up from critical to adequate. Score is projected to reach 63 by 2030, but this is highly contingent on RCJY Phase 3 staying on schedule.",
+    },
   },
   {
     id: "site-007",
@@ -1061,6 +1198,25 @@ export const sites = [
       ],
       aiAdvice:
         "This site's regulatory path is long because the absence of existing infrastructure forces applicants through utility upgrade agreements that are normally pre-solved in a developed industrial city. The SEC grid upgrade agreement is the critical path item — the 33→132 kV upgrade requires SEC board approval and can take 6 months on its own. Do not start formal permit applications until SEC has confirmed grid upgrade feasibility in writing. If SEC confirms unfeasibility, the site should be abandoned. Budget 14–20 months minimum.",
+    },
+    forecastDetail: {
+      plannedDesalinationPlants: [],
+      plannedTSEExpansions: [
+        { name: "Afif Regional Water Treatment Facility Upgrade", expectedCapacity: "25,000 m3/day", expectedYear: 2028 },
+      ],
+      infrastructureInvestments: [
+        { name: "Highway 40 Afif Industrial Zone Access Road Paving", amount: "SAR 55M", year: 2026 },
+        { name: "NWC Afif Municipal Water Network Expansion", amount: "SAR 210M", year: 2028 },
+        { name: "SEC Rural Electrification — Afif Zone (33 kV)", amount: "SAR 95M", year: 2029 },
+      ],
+      scoreProjection: [
+        { year: 2025, score: 41 },
+        { year: 2026, score: 42 },
+        { year: 2028, score: 43 },
+        { year: 2030, score: 45 },
+      ],
+      aiPrediction:
+        "Afif Technology Industrial Zone has limited infrastructure investment planned, and none of the planned investments address the site's fundamental constraints — the SEC grid remains at 33 kV through 2029 with no fiber extension on any current roadmap. The access road paving in 2026 is a positive development for construction logistics, and the regional water treatment upgrade in 2028 improves water access marginally. Score improvement through 2030 is expected to be minimal — 4 points over five years — as the core infrastructure gaps require investments that are not currently funded or planned.",
     },
   },
   {
@@ -1221,6 +1377,24 @@ export const sites = [
       ],
       aiAdvice:
         "Wadi Al-Dawasir has the longest and most uncertain approval path of all evaluated sites. The MOMRA zone reclassification and MEWA aquifer review can run concurrently but together take 6–8 months before any other permit can be issued — and both carry significant rejection risk. The SEC grid extension is estimated to cost the applicant SAR 120–180M in infrastructure funding and requires a separate SEC board approval. This site should not be pursued unless it is the only viable option for the specific use case, and even then a thorough pre-feasibility must confirm the SEC and aquifer gates before any significant investment is made.",
+    },
+    forecastDetail: {
+      plannedDesalinationPlants: [],
+      plannedTSEExpansions: [
+        { name: "Wadi Al-Dawasir Municipal Water Treatment Upgrade — Phase 1", expectedCapacity: "12,000 m3/day", expectedYear: 2029 },
+      ],
+      infrastructureInvestments: [
+        { name: "Saudi Green Initiative — Aquifer Restoration & Monitoring Study", amount: "SAR 35M", year: 2026 },
+        { name: "NWC Southern Region Water Security Programme", amount: "SAR 890M", year: 2030 },
+      ],
+      scoreProjection: [
+        { year: 2025, score: 28 },
+        { year: 2026, score: 29 },
+        { year: 2028, score: 30 },
+        { year: 2030, score: 31 },
+      ],
+      aiPrediction:
+        "Wadi Al-Dawasir Industrial Park has essentially no meaningful infrastructure investment planned before 2029. The aquifer monitoring study is a diagnostic exercise, not a supply solution, and the NWC Southern Region programme in 2030 is broad and may not reach this specific site in the plan period. The municipal water treatment upgrade arriving in 2029 will improve the water situation marginally, but the site will remain without terrestrial fiber or an adequate power grid for the foreseeable future. Score improvement through 2030 is projected at just 3 points. This site should be revisited only if a dedicated transmission and fiber investment is announced and funded.",
     },
   },
 ];

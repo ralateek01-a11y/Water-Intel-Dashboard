@@ -24,7 +24,12 @@ import {
   Network,
   Droplets,
   TrendingDown,
+  TrendingUp,
+  CalendarDays,
+  Waves,
+  ArrowUpRight,
 } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { waterInfrastructure } from '../data/waterInfrastructure';
@@ -80,6 +85,14 @@ interface CoolingDetail {
   dlc: CoolingOption;
 }
 
+interface ForecastDetail {
+  plannedDesalinationPlants: { name: string; expectedCapacity: string; expectedYear: number }[];
+  plannedTSEExpansions: { name: string; expectedCapacity: string; expectedYear: number }[];
+  infrastructureInvestments: { name: string; amount: string; year: number }[];
+  scoreProjection: { year: number; score: number }[];
+  aiPrediction: string;
+}
+
 interface RegulatoryDetail {
   requiredAgencies: { name: string; role: string }[];
   requiredPermits: string[];
@@ -130,6 +143,7 @@ interface Site {
   infrastructureDetail?: InfrastructureDetail;
   regulatoryDetail?: RegulatoryDetail;
   coolingDetail?: CoolingDetail;
+  forecastDetail?: ForecastDetail;
 }
 
 interface SiteDetailProps {
@@ -1152,6 +1166,205 @@ function RegulatoryTab({ site }: { site: Site }) {
   );
 }
 
+/* ─── Forecast tab ────────────────────────────────────────── */
+function ScoreTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-[#111827] border border-[#1F2937] rounded-lg px-3 py-2 shadow-xl">
+      <p className="text-[11px] text-[#6B7280] mb-0.5">{label}</p>
+      <p className="text-[15px] font-bold text-[#10B981]">{payload[0].value}</p>
+      <p className="text-[10px] text-[#4B5563]">overall score</p>
+    </div>
+  );
+}
+
+function ForecastTab({ site }: { site: Site }) {
+  const detail = site.forecastDetail;
+
+  if (!detail) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <p className="text-[#4B5563] text-sm">Forecast data not available for this site.</p>
+      </div>
+    );
+  }
+
+  const currentScore = detail.scoreProjection[0]?.score ?? site.overallScore;
+  const finalScore = detail.scoreProjection[detail.scoreProjection.length - 1]?.score ?? site.overallScore;
+  const delta = finalScore - currentScore;
+  const domainMin = Math.max(0, Math.min(...detail.scoreProjection.map(p => p.score)) - 8);
+  const domainMax = Math.min(100, Math.max(...detail.scoreProjection.map(p => p.score)) + 8);
+
+  const sortedInvestments = [...detail.infrastructureInvestments].sort((a, b) => a.year - b.year);
+
+  return (
+    <div className="flex flex-col gap-5">
+
+      {/* ── 1. Score Projection ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <SectionHeader icon={TrendingUp} title="Score Projection" />
+            <p className="text-[12px] text-[#6B7280] mt-1 ml-7">Projected overall site score through 2030</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Current score chip */}
+            <div className="text-right">
+              <p className="text-[10px] text-[#6B7280] mb-0.5">Current ({detail.scoreProjection[0]?.year ?? 2025})</p>
+              <span className="text-[22px] font-bold text-white leading-none">{currentScore}</span>
+            </div>
+            {/* Arrow + projected */}
+            <ArrowUpRight className={`w-5 h-5 flex-shrink-0 ${delta > 0 ? 'text-[#10B981]' : 'text-[#6B7280]'}`} />
+            <div className="text-right">
+              <p className="text-[10px] text-[#6B7280] mb-0.5">Projected (2030)</p>
+              <span className={`text-[22px] font-bold leading-none ${delta > 0 ? 'text-[#10B981]' : 'text-[#9CA3AF]'}`}>
+                {finalScore}
+              </span>
+            </div>
+            {delta !== 0 && (
+              <span className={`text-[12px] font-semibold px-2 py-1 rounded-full ${
+                delta > 0 ? 'text-[#10B981] bg-[#10B981]/10' : 'text-[#9CA3AF] bg-[#1F2937]'
+              }`}>
+                {delta > 0 ? '+' : ''}{delta} pts
+              </span>
+            )}
+          </div>
+        </div>
+
+        <ResponsiveContainer width="100%" height={190}>
+          <AreaChart data={detail.scoreProjection} margin={{ top: 8, right: 8, left: -28, bottom: 0 }}>
+            <defs>
+              <linearGradient id={`grad-${site.id}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor="#10B981" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" vertical={false} />
+            <XAxis
+              dataKey="year"
+              stroke="transparent"
+              tick={{ fill: '#6B7280', fontSize: 11 }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <YAxis
+              domain={[domainMin, domainMax]}
+              stroke="transparent"
+              tick={{ fill: '#6B7280', fontSize: 11 }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <RechartsTooltip content={<ScoreTooltip />} cursor={{ stroke: '#374151', strokeWidth: 1 }} />
+            <ReferenceLine y={currentScore} stroke="#374151" strokeDasharray="4 3" />
+            <Area
+              type="monotone"
+              dataKey="score"
+              stroke="#10B981"
+              strokeWidth={2.5}
+              fill={`url(#grad-${site.id})`}
+              dot={{ fill: '#10B981', stroke: '#0D1424', strokeWidth: 2, r: 4 }}
+              activeDot={{ r: 6, fill: '#10B981', stroke: '#0D1424', strokeWidth: 2 }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* ── 2+3. Planned Desalination + TSE side-by-side ── */}
+      <div className="grid grid-cols-2 gap-4">
+
+        {/* Planned Desalination Plants */}
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-3">
+          <SectionHeader icon={Waves} title="Planned Desalination Plants" />
+          {detail.plannedDesalinationPlants.length === 0 ? (
+            <p className="text-[12px] text-[#4B5563] pl-7">No desalination plants planned for this area.</p>
+          ) : (
+            <div className="flex flex-col gap-2.5 pl-1">
+              {detail.plannedDesalinationPlants.map((plant, i) => (
+                <div key={i} className="bg-[#111827] border border-[#1F2937] rounded-xl p-3 flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-[13px] font-semibold text-white leading-snug">{plant.name}</p>
+                    <span className="flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20 whitespace-nowrap">
+                      Planned
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[12px]">
+                    <span className="flex items-center gap-1 text-sky-400 font-medium">
+                      <Droplets className="w-3 h-3" /> {plant.expectedCapacity}
+                    </span>
+                    <span className="text-[#4B5563]">·</span>
+                    <span className="flex items-center gap-1 text-[#6B7280]">
+                      <CalendarDays className="w-3 h-3" /> {plant.expectedYear}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Planned TSE Expansions */}
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-3">
+          <SectionHeader icon={Network} title="Planned TSE Expansions" />
+          {detail.plannedTSEExpansions.length === 0 ? (
+            <p className="text-[12px] text-[#4B5563] pl-7">No TSE expansions planned for this area.</p>
+          ) : (
+            <div className="flex flex-col gap-2.5 pl-1">
+              {detail.plannedTSEExpansions.map((exp, i) => (
+                <div key={i} className="bg-[#111827] border border-[#1F2937] rounded-xl p-3 flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-[13px] font-semibold text-white leading-snug">{exp.name}</p>
+                    <span className="flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/20 whitespace-nowrap">
+                      Planned
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[12px]">
+                    <span className="flex items-center gap-1 text-[#10B981] font-medium">
+                      <Droplet className="w-3 h-3" /> {exp.expectedCapacity}
+                    </span>
+                    <span className="text-[#4B5563]">·</span>
+                    <span className="flex items-center gap-1 text-[#6B7280]">
+                      <CalendarDays className="w-3 h-3" /> {exp.expectedYear}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── 4. Infrastructure Investments timeline ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <SectionHeader icon={BarChart3} title="Infrastructure Investments" />
+        <div className="relative mt-4 pl-1">
+          {/* connecting line */}
+          <div className="absolute left-[15px] top-3 bottom-3 w-[2px] bg-[#1F2937]" />
+          <div className="flex flex-col gap-0">
+            {sortedInvestments.map((inv, i) => (
+              <div key={i} className="relative flex gap-4 pb-4 last:pb-0">
+                {/* Year dot */}
+                <div className="relative z-10 flex-shrink-0 flex flex-col items-center pt-0.5">
+                  <div className="w-[30px] h-[30px] rounded-full bg-[#1F2937] border border-[#374151] flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-amber-400">{inv.year}</span>
+                  </div>
+                </div>
+                {/* Content */}
+                <div className="flex-1 flex items-center justify-between bg-[#111827] border border-[#1F2937] rounded-xl px-3.5 py-2.5 gap-3">
+                  <p className="text-[13px] text-white leading-snug">{inv.name}</p>
+                  <span className="flex-shrink-0 text-[12px] font-bold text-amber-400 whitespace-nowrap">{inv.amount}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 5. AI Prediction ── */}
+      <AICallout text={detail.aiPrediction} />
+    </div>
+  );
+}
+
 /* ─── placeholder tab ─────────────────────────────────────── */
 function PlaceholderTab({ name }: { name: string }) {
   return (
@@ -1235,7 +1448,8 @@ export function SiteDetail({ site }: SiteDetailProps) {
         {activeTab === 'Infrastructure' && <InfrastructureTab site={site} />}
         {activeTab === 'Regulatory' && <RegulatoryTab site={site} />}
         {activeTab === 'Cooling Impact' && <CoolingTab site={site} />}
-        {activeTab !== 'Overview' && activeTab !== 'Water Access' && activeTab !== 'Infrastructure' && activeTab !== 'Regulatory' && activeTab !== 'Cooling Impact' && <PlaceholderTab name={activeTab} />}
+        {activeTab === 'Forecast' && <ForecastTab site={site} />}
+        {activeTab !== 'Overview' && activeTab !== 'Water Access' && activeTab !== 'Infrastructure' && activeTab !== 'Regulatory' && activeTab !== 'Cooling Impact' && activeTab !== 'Forecast' && <PlaceholderTab name={activeTab} />}
       </div>
     </div>
   );
