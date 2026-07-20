@@ -22,6 +22,8 @@ import {
   BarChart3,
   Radio,
   Network,
+  Droplets,
+  TrendingDown,
 } from 'lucide-react';
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
