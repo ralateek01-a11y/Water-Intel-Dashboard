@@ -64,6 +64,20 @@ interface InfrastructureDetail {
   aiRecommendation: string;
 }
 
+type Rating = 'Low' | 'Medium' | 'High';
+interface CoolingOption {
+  dailyWater: string;
+  energyUsage: Rating;
+  capex: Rating;
+  opex: Rating;
+}
+interface CoolingDetail {
+  air: CoolingOption;
+  liquid: CoolingOption;
+  immersion: CoolingOption;
+  dlc: CoolingOption;
+}
+
 interface RegulatoryDetail {
   requiredAgencies: { name: string; role: string }[];
   requiredPermits: string[];
@@ -113,6 +127,7 @@ interface Site {
   waterAccessDetail?: WaterAccessDetail;
   infrastructureDetail?: InfrastructureDetail;
   regulatoryDetail?: RegulatoryDetail;
+  coolingDetail?: CoolingDetail;
 }
 
 interface SiteDetailProps {
@@ -125,6 +140,7 @@ const TABS = [
   'Water Access',
   'Infrastructure',
   'Regulatory',
+  'Cooling Impact',
   'Forecast',
   'Documents',
   'Compare',
@@ -809,6 +825,193 @@ function OverviewTab({ site }: { site: Site }) {
   );
 }
 
+/* ─── Cooling Impact tab ──────────────────────────────────── */
+type CoolingKey = 'air' | 'liquid' | 'immersion' | 'dlc';
+
+const COOLING_OPTIONS: { key: CoolingKey; label: string; icon: string }[] = [
+  { key: 'air',       label: 'Air Cooling',       icon: '💨' },
+  { key: 'liquid',    label: 'Liquid Cooling',     icon: '💧' },
+  { key: 'immersion', label: 'Immersion Cooling',  icon: '🧊' },
+  { key: 'dlc',       label: 'Direct Liquid (DLC)', icon: '⚡' },
+];
+
+function ratingColors(r: 'Low' | 'Medium' | 'High') {
+  if (r === 'Low')    return { text: 'text-[#10B981]', bg: 'bg-[#10B981]/10', border: 'border-[#10B981]/30', dot: 'bg-[#10B981]' };
+  if (r === 'Medium') return { text: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/30',  dot: 'bg-amber-400' };
+  return               { text: 'text-red-400',   bg: 'bg-red-500/10',    border: 'border-red-500/30',    dot: 'bg-red-400' };
+}
+
+function RatingBadge({ value }: { value: 'Low' | 'Medium' | 'High' }) {
+  const c = ratingColors(value);
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-[12px] font-semibold px-2.5 py-1 rounded-full border ${c.text} ${c.bg} ${c.border}`}>
+      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${c.dot}`} />
+      {value}
+    </span>
+  );
+}
+
+function CoolingTab({ site }: { site: Site }) {
+  const detail = site.coolingDetail;
+  const [selected, setSelected] = useState<CoolingKey>('air');
+
+  if (!detail) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <p className="text-[#4B5563] text-sm">Cooling detail not available for this site.</p>
+      </div>
+    );
+  }
+
+  const opt = detail[selected];
+
+  return (
+    <div className="flex flex-col gap-5">
+
+      {/* ── Selector pills ── */}
+      <div className="flex gap-2 flex-wrap">
+        {COOLING_OPTIONS.map(({ key, label, icon }) => {
+          const active = selected === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setSelected(key)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-[13px] font-medium transition-all ${
+                active
+                  ? 'bg-[#10B981]/15 border-[#10B981]/50 text-[#10B981]'
+                  : 'bg-[#0D1424] border-[#1F2937] text-[#6B7280] hover:border-[#374151] hover:text-[#9CA3AF]'
+              }`}
+            >
+              <span>{icon}</span>
+              {label}
+              {active && <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] flex-shrink-0" />}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Stat card for selected technology ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <p className="text-[11px] text-[#6B7280] font-medium mb-3 uppercase tracking-wider">
+          {COOLING_OPTIONS.find(o => o.key === selected)?.label} — Key Metrics
+        </p>
+        <div className="grid grid-cols-4 gap-3">
+          {/* Daily Water */}
+          <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3.5 flex flex-col gap-2">
+            <div className="flex items-center gap-1.5">
+              <Droplets className="w-3.5 h-3.5 text-sky-400" />
+              <span className="text-[11px] text-[#6B7280] font-medium">Daily Water</span>
+            </div>
+            <p className="text-[15px] font-bold text-white leading-tight">{opt.dailyWater}</p>
+            <RatingBadge value={
+              // derive Low/Med/High from absolute value for display consistency
+              selected === 'air' ? 'High' : selected === 'liquid' ? 'Medium' : 'Low'
+            } />
+          </div>
+          {/* Energy Usage */}
+          <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3.5 flex flex-col gap-2">
+            <div className="flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-[11px] text-[#6B7280] font-medium">Energy Usage</span>
+            </div>
+            <p className="text-[15px] font-bold text-white leading-tight">
+              {opt.energyUsage === 'High' ? 'PUE ~1.6' : opt.energyUsage === 'Medium' ? 'PUE ~1.35' : 'PUE ~1.05'}
+            </p>
+            <RatingBadge value={opt.energyUsage} />
+          </div>
+          {/* CAPEX */}
+          <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3.5 flex flex-col gap-2">
+            <div className="flex items-center gap-1.5">
+              <BarChart3 className="w-3.5 h-3.5 text-violet-400" />
+              <span className="text-[11px] text-[#6B7280] font-medium">CAPEX</span>
+            </div>
+            <p className="text-[15px] font-bold text-white leading-tight">
+              {opt.capex === 'Low' ? 'Standard' : opt.capex === 'Medium' ? '+25–40%' : '+60–90%'}
+            </p>
+            <RatingBadge value={opt.capex} />
+          </div>
+          {/* OPEX */}
+          <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-3.5 flex flex-col gap-2">
+            <div className="flex items-center gap-1.5">
+              <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
+              <span className="text-[11px] text-[#6B7280] font-medium">OPEX</span>
+            </div>
+            <p className="text-[15px] font-bold text-white leading-tight">
+              {opt.opex === 'High' ? 'Highest' : opt.opex === 'Medium' ? 'Moderate' : 'Lowest'}
+            </p>
+            <RatingBadge value={opt.opex} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Comparison table ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <SectionHeader icon={BarChart3} title="All Technologies — Side-by-Side" />
+        <div className="mt-1 overflow-x-auto">
+          <table className="w-full text-[13px]">
+            <thead>
+              <tr className="border-b border-[#1F2937]">
+                <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2.5 pr-4">Technology</th>
+                <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2.5 pr-4">Daily Water</th>
+                <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2.5 pr-4">Energy</th>
+                <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2.5 pr-4">CAPEX</th>
+                <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2.5">OPEX</th>
+              </tr>
+            </thead>
+            <tbody>
+              {COOLING_OPTIONS.map(({ key, label, icon }) => {
+                const row = detail[key];
+                const isSelected = key === selected;
+                return (
+                  <tr
+                    key={key}
+                    onClick={() => setSelected(key)}
+                    className={`border-b border-[#1F2937]/50 last:border-0 cursor-pointer transition-colors ${
+                      isSelected ? 'bg-[#10B981]/5' : 'hover:bg-[#111827]/60'
+                    }`}
+                  >
+                    <td className="py-3 pr-4">
+                      <div className="flex items-center gap-2">
+                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] flex-shrink-0" />}
+                        {!isSelected && <span className="w-1.5 h-1.5 rounded-full bg-transparent flex-shrink-0" />}
+                        <span className={`font-semibold ${isSelected ? 'text-[#10B981]' : 'text-white'}`}>
+                          {icon} {label}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <span className="text-[#D1D5DB]">{row.dailyWater}</span>
+                    </td>
+                    <td className="py-3 pr-4"><RatingBadge value={row.energyUsage} /></td>
+                    <td className="py-3 pr-4"><RatingBadge value={row.capex} /></td>
+                    <td className="py-3"><RatingBadge value={row.opex} /></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#1F2937]">
+          <span className="text-[11px] text-[#4B5563]">Lower is better for all metrics.</span>
+          <div className="flex items-center gap-3">
+            {(['Low', 'Medium', 'High'] as const).map(r => {
+              const c = ratingColors(r);
+              return (
+                <span key={r} className={`inline-flex items-center gap-1 text-[11px] ${c.text}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+                  {r}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Regulatory tab ──────────────────────────────────────── */
 function RegulatoryTab({ site }: { site: Site }) {
   const detail = site.regulatoryDetail;
@@ -1029,7 +1232,8 @@ export function SiteDetail({ site }: SiteDetailProps) {
         {activeTab === 'Water Access' && <WaterAccessTab site={site} />}
         {activeTab === 'Infrastructure' && <InfrastructureTab site={site} />}
         {activeTab === 'Regulatory' && <RegulatoryTab site={site} />}
-        {activeTab !== 'Overview' && activeTab !== 'Water Access' && activeTab !== 'Infrastructure' && activeTab !== 'Regulatory' && <PlaceholderTab name={activeTab} />}
+        {activeTab === 'Cooling Impact' && <CoolingTab site={site} />}
+        {activeTab !== 'Overview' && activeTab !== 'Water Access' && activeTab !== 'Infrastructure' && activeTab !== 'Regulatory' && activeTab !== 'Cooling Impact' && <PlaceholderTab name={activeTab} />}
       </div>
     </div>
   );

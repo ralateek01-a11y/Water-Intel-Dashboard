@@ -31,6 +31,12 @@ export const sites = [
       immersionCooling: "+900 m3/day",
       dlcCooling: "+1,200 m3/day",
     },
+    coolingDetail: {
+      air:       { dailyWater: "+2,400 m3/day", energyUsage: "High",   capex: "Low",  opex: "High"   },
+      liquid:    { dailyWater: "+1,800 m3/day", energyUsage: "Medium", capex: "Medium", opex: "Medium" },
+      immersion: { dailyWater: "+900 m3/day",   energyUsage: "Low",    capex: "High", opex: "Low"    },
+      dlc:       { dailyWater: "+1,200 m3/day", energyUsage: "Low",    capex: "High", opex: "Medium" },
+    },
     nearbyInfrastructure: [
       { name: "Heet TSE Plant", type: "Water Treatment", distance: "0.8 km", status: "Operational" },
       { name: "Saudi Electricity Substation H-7", type: "Power", distance: "1.4 km", status: "Operational" },
@@ -167,6 +173,12 @@ export const sites = [
       liquidCooling: "+1,550 m3/day",
       immersionCooling: "+780 m3/day",
       dlcCooling: "+1,040 m3/day",
+    },
+    coolingDetail: {
+      air:       { dailyWater: "+2,100 m3/day", energyUsage: "High",   capex: "Low",  opex: "High"   },
+      liquid:    { dailyWater: "+1,550 m3/day", energyUsage: "Medium", capex: "Medium", opex: "Medium" },
+      immersion: { dailyWater: "+780 m3/day",   energyUsage: "Low",    capex: "High", opex: "Low"    },
+      dlc:       { dailyWater: "+1,040 m3/day", energyUsage: "Low",    capex: "High", opex: "Medium" },
     },
     nearbyInfrastructure: [
       { name: "Al-Khair TSE Plant", type: "Water Treatment", distance: "1.2 km", status: "Operational" },
@@ -306,6 +318,12 @@ export const sites = [
       liquidCooling: "+1,420 m3/day",
       immersionCooling: "+710 m3/day",
       dlcCooling: "+950 m3/day",
+    },
+    coolingDetail: {
+      air:       { dailyWater: "+1,950 m3/day", energyUsage: "High",   capex: "Low",  opex: "High"   },
+      liquid:    { dailyWater: "+1,420 m3/day", energyUsage: "Medium", capex: "Medium", opex: "Medium" },
+      immersion: { dailyWater: "+710 m3/day",   energyUsage: "Low",    capex: "High", opex: "Low"    },
+      dlc:       { dailyWater: "+950 m3/day",   energyUsage: "Low",    capex: "High", opex: "Medium" },
     },
     nearbyInfrastructure: [
       { name: "Sudair TSE Plant", type: "Water Treatment", distance: "3.1 km", status: "Operational" },
@@ -452,6 +470,12 @@ export const sites = [
       liquidCooling: "+1,200 m3/day",
       immersionCooling: "+600 m3/day",
       dlcCooling: "+800 m3/day",
+    },
+    coolingDetail: {
+      air:       { dailyWater: "+1,650 m3/day", energyUsage: "High",   capex: "Low",  opex: "High"   },
+      liquid:    { dailyWater: "+1,200 m3/day", energyUsage: "Medium", capex: "Medium", opex: "Medium" },
+      immersion: { dailyWater: "+600 m3/day",   energyUsage: "Low",    capex: "High", opex: "Low"    },
+      dlc:       { dailyWater: "+800 m3/day",   energyUsage: "Low",    capex: "High", opex: "Medium" },
     },
     nearbyInfrastructure: [
       { name: "Jubail Industrial Canal", type: "Water Source", distance: "4.5 km", status: "Operational" },
@@ -602,6 +626,12 @@ export const sites = [
       immersionCooling: "+480 m3/day",
       dlcCooling: "+640 m3/day",
     },
+    coolingDetail: {
+      air:       { dailyWater: "+1,300 m3/day", energyUsage: "High",   capex: "Low",  opex: "High"   },
+      liquid:    { dailyWater: "+960 m3/day",   energyUsage: "Medium", capex: "Medium", opex: "Medium" },
+      immersion: { dailyWater: "+480 m3/day",   energyUsage: "Low",    capex: "High", opex: "Low"    },
+      dlc:       { dailyWater: "+640 m3/day",   energyUsage: "Low",    capex: "High", opex: "Medium" },
+    },
     nearbyInfrastructure: [
       { name: "Buraydah Municipal TSE", type: "Water Treatment", distance: "6.2 km", status: "Operational" },
       { name: "SEC Grid Station Q-5", type: "Power", distance: "4.1 km", status: "Operational" },
@@ -750,6 +780,12 @@ export const sites = [
       liquidCooling: "+800 m3/day",
       immersionCooling: "+400 m3/day",
       dlcCooling: "+535 m3/day",
+    },
+    coolingDetail: {
+      air:       { dailyWater: "+1,100 m3/day", energyUsage: "High",   capex: "Low",  opex: "High"   },
+      liquid:    { dailyWater: "+800 m3/day",   energyUsage: "Medium", capex: "Medium", opex: "Medium" },
+      immersion: { dailyWater: "+400 m3/day",   energyUsage: "Low",    capex: "High", opex: "Low"    },
+      dlc:       { dailyWater: "+535 m3/day",   energyUsage: "Low",    capex: "High", opex: "Medium" },
     },
     nearbyInfrastructure: [
       { name: "Jubail Royal Commission TSE", type: "Water Treatment", distance: "8.7 km", status: "Operational" },
@@ -903,6 +939,12 @@ export const sites = [
       immersionCooling: "+245 m3/day",
       dlcCooling: "+330 m3/day",
     },
+    coolingDetail: {
+      air:       { dailyWater: "+680 m3/day",  energyUsage: "High",   capex: "Low",  opex: "High"   },
+      liquid:    { dailyWater: "+490 m3/day",  energyUsage: "Medium", capex: "Medium", opex: "Medium" },
+      immersion: { dailyWater: "+245 m3/day",  energyUsage: "Low",    capex: "High", opex: "Low"    },
+      dlc:       { dailyWater: "+330 m3/day",  energyUsage: "Low",    capex: "High", opex: "Medium" },
+    },
     nearbyInfrastructure: [
       { name: "Afif Municipal Treatment Plant", type: "Water Treatment", distance: "14.3 km", status: "Limited Capacity" },
       { name: "SEC Rural Feeder AF-2", type: "Power", distance: "9.8 km", status: "Constrained" },
@@ -1052,6 +1094,12 @@ export const sites = [
       liquidCooling: "+300 m3/day",
       immersionCooling: "+150 m3/day",
       dlcCooling: "+200 m3/day",
+    },
+    coolingDetail: {
+      air:       { dailyWater: "+420 m3/day",  energyUsage: "High",   capex: "Low",  opex: "High"   },
+      liquid:    { dailyWater: "+300 m3/day",  energyUsage: "Medium", capex: "Medium", opex: "Medium" },
+      immersion: { dailyWater: "+150 m3/day",  energyUsage: "Low",    capex: "High", opex: "Low"    },
+      dlc:       { dailyWater: "+200 m3/day",  energyUsage: "Low",    capex: "High", opex: "Medium" },
     },
     nearbyInfrastructure: [
       { name: "Wadi Al-Dawasir Municipal TSE", type: "Water Treatment", distance: "22.1 km", status: "Limited Capacity" },
