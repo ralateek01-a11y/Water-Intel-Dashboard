@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { sites, getSiteById, getSitesSortedByScore } from './data/sites.js';
 import { SiteMap } from './components/SiteMap';
 import { SiteDetail } from './components/SiteDetail';
+import { AIChatPage } from './components/AIChatPage';
 import { 
   Droplet, 
   LayoutDashboard, 
@@ -20,8 +21,11 @@ import {
   Bell
 } from 'lucide-react';
 
+type Page = 'site-finder' | 'ai-chat';
+
 function Shell() {
   const sortedSites = getSitesSortedByScore();
+  const [activePage, setActivePage] = useState<Page>('site-finder');
   const [selectedSiteId, setSelectedSiteId] = useState(sortedSites[0]?.id);
   const selectedSite = getSiteById(selectedSiteId);
   const [regionFilter, setRegionFilter] = useState('All Regions');
@@ -34,18 +38,18 @@ function Shell() {
     return { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30', stroke: '#EF4444' };
   };
 
-  // Navigation configuration
-  const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', active: true },
-    { icon: FolderOpen, label: 'Projects', active: false },
-    { icon: MapPin, label: 'Site Finder', active: false },
-    { icon: Workflow, label: 'Water Infrastructure', active: false },
-    { icon: Server, label: 'Data Centers', active: false },
-    { icon: FileText, label: 'Documents & Reports', active: false },
-    { icon: MessageSquare, label: 'AI Chat Assistant', active: false },
-    { icon: BookOpen, label: 'Regulatory Guide', active: false },
-    { icon: SlidersHorizontal, label: 'Compare Sites', active: false },
-    { icon: BarChart3, label: 'Reports', active: false },
+  // Navigation — items with optional page key; anything without one keeps current page
+  const navItems: { icon: React.ComponentType<React.SVGProps<SVGSVGElement>>; label: string; page?: Page }[] = [
+    { icon: LayoutDashboard, label: 'Dashboard', page: 'site-finder' },
+    { icon: FolderOpen, label: 'Projects' },
+    { icon: MapPin, label: 'Site Finder', page: 'site-finder' },
+    { icon: Workflow, label: 'Water Infrastructure' },
+    { icon: Server, label: 'Data Centers' },
+    { icon: FileText, label: 'Documents & Reports' },
+    { icon: MessageSquare, label: 'AI Chat Assistant', page: 'ai-chat' },
+    { icon: BookOpen, label: 'Regulatory Guide' },
+    { icon: SlidersHorizontal, label: 'Compare Sites' },
+    { icon: BarChart3, label: 'Reports' },
   ];
 
   return (
@@ -68,21 +72,23 @@ function Shell() {
         <div className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
           {navItems.map((item, idx) => {
             const Icon = item.icon;
+            const isActive = item.page !== undefined && activePage === item.page;
             return (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
+                onClick={() => item.page && setActivePage(item.page)}
                 className={`
                   flex items-center gap-3 px-3 py-[10px] rounded-md cursor-pointer transition-colors relative
-                  ${item.active 
-                    ? 'bg-[#10B981]/15 text-[#10B981]' 
+                  ${isActive
+                    ? 'bg-[#10B981]/15 text-[#10B981]'
                     : 'text-[#9CA3AF] hover:text-[#D1D5DB] hover:bg-white/5'
                   }
                 `}
               >
-                {item.active && (
+                {isActive && (
                   <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#10B981] rounded-l-md" />
                 )}
-                <Icon className={`w-4 h-4 ${item.active ? 'text-[#10B981]' : 'text-[#6B7280]'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-[#10B981]' : 'text-[#6B7280]'}`} />
                 <span className="text-sm font-medium">{item.label}</span>
               </div>
             );
@@ -126,7 +132,10 @@ function Shell() {
             <p className="text-[11px] text-[#9CA3AF] leading-relaxed mb-1">
               Ask our AI assistant anything about water, regulations, or site selection.
             </p>
-            <button className="w-full bg-[#10B981] hover:bg-[#059669] text-white text-xs font-medium py-2 rounded-md transition-colors">
+            <button
+              onClick={() => setActivePage('ai-chat')}
+              className="w-full bg-[#10B981] hover:bg-[#059669] text-white text-xs font-medium py-2 rounded-md transition-colors"
+            >
               Start AI Chat
             </button>
           </div>
@@ -183,6 +192,14 @@ function Shell() {
 
         {/* Main Content Area */}
         <div className="flex-1 bg-[#0A0E17] flex flex-col overflow-hidden">
+
+          {/* ── AI Chat Page ── */}
+          {activePage === 'ai-chat' && (
+            <AIChatPage selectedSite={selectedSite} />
+          )}
+
+          {/* ── Site Finder Page ── */}
+          {activePage === 'site-finder' && <>
 
           {/* Header row — fixed, never scrolls */}
           <div className="flex-shrink-0 px-6 pt-6 pb-4 flex w-full justify-between items-end">
@@ -402,6 +419,9 @@ function Shell() {
             )}
 
           </div>{/* end scrollable body */}
+
+          </>}
+
         </div>
       </div>
       
