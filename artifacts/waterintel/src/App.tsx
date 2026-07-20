@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { sites, getSiteById, getSitesSortedByScore } from './data/sites.js';
 import { 
   Droplet, 
   LayoutDashboard, 
@@ -18,6 +19,19 @@ import {
 } from 'lucide-react';
 
 function Shell() {
+  const sortedSites = getSitesSortedByScore();
+  const [selectedSiteId, setSelectedSiteId] = useState(sortedSites[0]?.id);
+  const selectedSite = getSiteById(selectedSiteId);
+  const [regionFilter, setRegionFilter] = useState('All Regions');
+  const [powerFilter, setPowerFilter] = useState('Any Capacity');
+  const [coolingFilter, setCoolingFilter] = useState('All Technologies');
+
+  const getScoreColors = (score: number) => {
+    if (score >= 80) return { bg: 'bg-[#10B981]/20', text: 'text-[#10B981]', border: 'border-[#10B981]/30', stroke: '#10B981' };
+    if (score >= 60) return { bg: 'bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500/30', stroke: '#F59E0B' };
+    return { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30', stroke: '#EF4444' };
+  };
+
   // Navigation configuration
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', active: true },
@@ -166,8 +180,228 @@ function Shell() {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 bg-[#0A0E17] flex items-center justify-center">
-          <p className="text-[#374151] text-sm">Main content area</p>
+        <div className="flex-1 bg-[#0A0E17] overflow-y-auto">
+          <div className="p-6">
+            {/* Header row */}
+            <div className="flex w-full justify-between items-end mb-6">
+              <div>
+                <h1 className="text-white text-[20px] font-bold">Site Finder</h1>
+                <p className="text-[#6B7280] text-[13px] mt-1">
+                  Find the best data center sites based on water availability and infrastructure readiness.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button 
+                  className="border border-[#1F2937] bg-transparent text-[#D1D5DB] hover:bg-[#1F2937]/50 rounded-md px-4 py-2 text-sm transition-colors"
+                  data-testid="button-new-project"
+                >
+                  New Project
+                </button>
+                <button 
+                  className="bg-[#10B981] text-white hover:bg-[#059669] rounded-md px-4 py-2 text-sm transition-colors"
+                  data-testid="button-add-custom-site"
+                >
+                  + Add Custom Site
+                </button>
+              </div>
+            </div>
+
+            {/* Two-column layout */}
+            <div className="flex gap-5">
+              
+              {/* Left panel - Top Ranked Sites */}
+              <div className="w-[340px] flex-shrink-0">
+                <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <h2 className="text-sm font-semibold text-white">Top Ranked Sites</h2>
+                    <span className="bg-[#1F2937] text-[#9CA3AF] rounded-full px-2 py-0.5 text-[10px] font-medium leading-tight">
+                      8 sites
+                    </span>
+                  </div>
+                  
+                  <div className="flex flex-col">
+                    {sortedSites.slice(0, 5).map((site, index) => {
+                      const isSelected = site.id === selectedSiteId;
+                      const isLast = index === 4;
+                      const scoreColors = getScoreColors(site.overallScore);
+                      
+                      return (
+                        <div 
+                          key={site.id}
+                          className={`
+                            flex items-center gap-3 py-3 cursor-pointer
+                            ${!isLast && !isSelected ? 'border-b border-[#1F2937]' : ''}
+                            ${isSelected ? 'bg-[#10B981]/8 rounded-lg border border-[#10B981]/20 px-2 mx-[-8px]' : ''}
+                          `}
+                          onClick={() => setSelectedSiteId(site.id)}
+                          data-testid={`row-site-${site.id}`}
+                        >
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${scoreColors.bg} ${scoreColors.text}`}>
+                            {index + 1}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-white truncate">{site.name}</div>
+                            <div className="text-xs text-[#6B7280] truncate">{site.region}</div>
+                          </div>
+                          
+                          <div className="flex flex-col items-center justify-center">
+                            <div 
+                              className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2 ${scoreColors.border} ${scoreColors.bg} ${scoreColors.text}`} 
+                              data-testid={`badge-score-${site.id}`}
+                            >
+                              {site.overallScore}
+                            </div>
+                            <div className={`text-[10px] mt-1 ${scoreColors.text} font-medium`}>
+                              {site.rating}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  <a className="text-[#10B981] text-xs hover:underline cursor-pointer mt-3 block text-right" data-testid="link-view-all">
+                    View all sites &rarr;
+                  </a>
+                </div>
+              </div>
+
+              {/* Right panel - Stacked cards */}
+              <div className="flex-1 flex flex-col gap-4">
+                
+                {/* Card A - Site Suitability Score */}
+                {selectedSite && (
+                  <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-5">
+                    <div className="flex justify-between items-center">
+                      <h2 className="text-sm font-semibold text-white">Site Suitability Score</h2>
+                      <span className="text-[#6B7280] text-xs">{selectedSite.name}</span>
+                    </div>
+                    
+                    <div className="flex justify-center mt-4 mb-4">
+                      <div className="relative w-[140px] h-[140px]">
+                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 140 140">
+                          <circle 
+                            cx="70" cy="70" r="54" 
+                            stroke="#1F2937" strokeWidth="10" fill="none" 
+                          />
+                          <circle 
+                            cx="70" cy="70" r="54" 
+                            stroke={getScoreColors(selectedSite.overallScore).stroke} 
+                            strokeWidth="10" fill="none" 
+                            strokeLinecap="round"
+                            strokeDasharray="339.3" 
+                            strokeDashoffset={339.3 - (selectedSite.overallScore / 100) * 339.3}
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-[28px] font-bold text-white leading-none">
+                            {selectedSite.overallScore}
+                          </span>
+                          <span className={`text-[12px] font-medium ${getScoreColors(selectedSite.overallScore).text} mt-1`}>
+                            {selectedSite.rating}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <p className="text-xs text-[#6B7280] text-center px-4">
+                      {selectedSite.overallScore >= 80 ? "Excellent site with strong water access and infrastructure readiness." : 
+                       selectedSite.overallScore >= 60 ? "Good site with adequate water and infrastructure resources." : 
+                       "Site has significant constraints. Review details carefully."}
+                    </p>
+                    
+                    <div className="mt-5 space-y-3">
+                      {[
+                        { label: 'Water Access', score: selectedSite.waterAccess.score },
+                        { label: 'Infrastructure', score: selectedSite.infrastructure.score },
+                        { label: 'Regulatory', score: selectedSite.regulatory.score },
+                        { label: 'Future Capacity', score: Math.round((selectedSite.waterAccess.score + selectedSite.infrastructure.score) / 2) }
+                      ].map((metric, i) => {
+                        const metricColors = getScoreColors(metric.score);
+                        return (
+                          <div key={i} className="flex flex-col">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-xs text-[#9CA3AF]">{metric.label}</span>
+                              <span className={`text-xs font-bold ${metricColors.text}`}>{metric.score}</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-[#1F2937] rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full rounded-full`} 
+                                style={{ width: `${metric.score}%`, backgroundColor: metricColors.stroke }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Card B - Quick Filters */}
+                <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-5">
+                  <h2 className="text-sm font-semibold text-white mb-4">Quick Filters</h2>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs text-[#6B7280] mb-1">Region</label>
+                      <select 
+                        value={regionFilter}
+                        onChange={(e) => setRegionFilter(e.target.value)}
+                        className="w-full bg-[#0A0E17] border border-[#1F2937] text-white text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                        data-testid="select-region"
+                      >
+                        <option>All Regions</option>
+                        <option>Riyadh</option>
+                        <option>Eastern</option>
+                        <option>Qassim</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs text-[#6B7280] mb-1">Power Requirement</label>
+                      <select 
+                        value={powerFilter}
+                        onChange={(e) => setPowerFilter(e.target.value)}
+                        className="w-full bg-[#0A0E17] border border-[#1F2937] text-white text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                        data-testid="select-power"
+                      >
+                        <option>Any Capacity</option>
+                        <option>50–100 MW</option>
+                        <option>100–200 MW</option>
+                        <option>200–500 MW</option>
+                        <option>500 MW+</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs text-[#6B7280] mb-1">Cooling Technology</label>
+                      <select 
+                        value={coolingFilter}
+                        onChange={(e) => setCoolingFilter(e.target.value)}
+                        className="w-full bg-[#0A0E17] border border-[#1F2937] text-white text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                        data-testid="select-cooling"
+                      >
+                        <option>All Technologies</option>
+                        <option>Air Cooling</option>
+                        <option>Liquid Cooling</option>
+                        <option>Immersion Cooling</option>
+                        <option>DLC</option>
+                      </select>
+                    </div>
+                    
+                    <button 
+                      className="mt-4 w-full bg-[#10B981] hover:bg-[#059669] text-white text-sm font-medium py-2 rounded-md transition-colors"
+                      data-testid="button-apply-filters"
+                    >
+                      Apply Filters
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       

@@ -1,0 +1,40 @@
+Build the "Site Finder" page content (replacing the placeholder in the main
+content area). Import sites from src/data/sites.js.
+
+Layout, left to right:
+
+1. Header row: "Site Finder" title + subtitle "Find the best data center
+   sites based on water availability and infrastructure readiness." On the
+   right, a "New Project" button (outline style) and "+ Add Custom Site"
+   button (filled green).
+
+2. Left panel "Top Ranked Sites" (card list):
+   - Show sites sorted by overallScore descending, top 5 visible with a
+     "View all sites" link below
+   - Each row: rank number in a circle, site name (bold), region (muted
+     text below), and a colored circular score badge on the right
+     (green if score >= 80, yellow/amber if 60-79, red if < 60), with the
+     rating word ("Excellent"/"Good"/"Moderate") below the badge
+   - Clicking a row should set it as the "selected site" (use React state
+     at the page level, e.g. useState for selectedSiteId, default to the
+     #1 ranked site)
+
+3. Right panel "Site Suitability Score" — reflects whichever site is
+   currently selected:
+   - Large circular gauge showing overallScore out of 100 (use a simple SVG
+     arc or a library like react-circular-progressbar), with the rating word
+     underneath and one sentence of description
+   - Below the gauge, four horizontal progress bars for: Water Access,
+     Infrastructure, Regulatory Complexity, Future Capacity — each showing
+     the score out of 100, bar color green if >=80, amber if 60-79, red if
+     below 60 (note: for Regulatory Complexity, treat it as "higher score
+     needed" the same way — I'm simplifying, don't invert the logic)
+   - A "Quick Filters" card below with dropdowns for Region (All Regions /
+     Riyadh / Eastern / Qassim), Power Requirement (dropdown with ranges
+     like "50-200 MW"), Cooling Technology (Immersion Cooling / Liquid
+     Cooling / Air Cooling / DLC) — these don't need to actually filter yet,
+     just be visually present and functional as controlled inputs
+   - An "Apply Filters" button (filled green, full width)
+
+Make the selected site visually distinct in the left list (subtle border or
+background highlight).
