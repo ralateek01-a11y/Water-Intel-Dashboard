@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import optimaLogoUrl from './assets/optima-logo.svg';
 import { sites, getSiteById, getSitesSortedByScore } from './data/sites.js';
 import { projects as initialProjects } from './data/projects.js';
 import { SiteMap } from './components/SiteMap';
@@ -34,15 +35,13 @@ type Page = 'dashboard' | 'site-finder' | 'ai-chat' | 'projects' | 'project-deta
 /* ── Optima logo mark ───────────────────────────────────────── */
 function OptimaLogo({ size = 28 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="28" height="28" rx="6" fill="#10B981" fillOpacity="0.12" />
-      <circle cx="14" cy="14" r="7.5" stroke="#10B981" strokeWidth="2" />
-      <circle cx="14" cy="14" r="2.5" fill="#10B981" />
-      <line x1="14" y1="4"    x2="14" y2="7.5"  stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="14" y1="20.5" x2="14" y2="24"   stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="4"  y1="14"   x2="7.5" y2="14"  stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="20.5" y1="14" x2="24"  y2="14"  stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
+    <img
+      src={optimaLogoUrl}
+      width={size}
+      height={size}
+      alt="Optima"
+      style={{ objectFit: 'contain', display: 'block' }}
+    />
   );
 }
 
