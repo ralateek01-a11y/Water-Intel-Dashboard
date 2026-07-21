@@ -1,0 +1,42 @@
+The AI Chat Assistant page isn't responding when a message is sent — no
+reply appears at all. Debug and fix this by checking, in order:
+
+1. Confirm ANTHROPIC_API_KEY is actually set as a Replit secret and that
+   your backend route is reading it correctly (e.g.
+   process.env.ANTHROPIC_API_KEY) — log an error clearly on the server if
+   it's missing, rather than failing silently.
+
+2. Confirm the frontend is actually sending the request to the correct
+   backend endpoint — check the browser's network tab / add a
+   console.log on both the frontend fetch call and the backend route
+   handler to confirm the request is arriving at all. If the frontend is
+   calling the Anthropic API directly instead of going through your own
+   backend route, fix this — API calls must go through your backend, never
+   directly from the browser, both because the API key can't be exposed
+   client-side and because that's likely why nothing is working.
+
+3. Confirm the backend route is correctly calling the Anthropic API with
+   model "claude-sonnet-4-6", a valid messages array, and max_tokens set,
+   and that it's awaiting the response properly before sending it back to
+   the frontend.
+
+4. Confirm the frontend is correctly parsing whatever the backend sends
+   back and appending it to the message list — check that the response
+   shape matches what the frontend expects (e.g. if the backend sends
+   { reply: "..." } but the frontend expects response.data.content[0].text,
+   that mismatch alone would explain nothing appearing).
+
+5. Add visible error handling: if the request fails for any reason (missing
+   key, network error, malformed response), show an actual error message in
+   the chat UI ("Something went wrong — please try again") instead of
+   silently doing nothing, so future issues are debuggable instead of
+   looking identical to "not responding."
+
+6. Once basic responses work, confirm the system prompt is still correctly
+   injecting the site/project/water-infrastructure/data-center context data
+   as built in Phase 12, and that suggested prompt clicks (from the
+   sidebar) are also going through this same working flow.
+
+Test with a simple message like "Which site has the lowest approval
+complexity?" and confirm you get a real, data-grounded response back before
+considering this fixed.
