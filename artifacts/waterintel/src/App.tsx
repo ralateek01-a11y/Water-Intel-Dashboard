@@ -464,38 +464,24 @@ function Shell() {
             </div>
             )}
 
-            {/* Three-column row — fixed height */}
+            {/* Three-column row — Dashboard only */}
+            {activePage === 'dashboard' && (
             <div className="h-[420px] flex-shrink-0 px-6 pt-1 pb-4 flex gap-4">
 
               {/* Left panel — Top Ranked Sites */}
               <div className="w-[260px] flex-shrink-0 overflow-y-auto">
                 <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4 h-full flex flex-col">
                   <div className="flex items-center gap-2 mb-4">
-                    <h2 className="text-sm font-semibold text-white">
-                      {activePage === 'site-finder' && finderHasRun ? 'Matched Sites' : 'Top Ranked Sites'}
-                    </h2>
+                    <h2 className="text-sm font-semibold text-white">Top Ranked Sites</h2>
                     <span className="bg-[#1F2937] text-[#9CA3AF] rounded-full px-2 py-0.5 text-[10px] font-medium leading-tight">
-                      {finderLoading ? '…' : `${displayedSites.length} site${displayedSites.length !== 1 ? 's' : ''}`}
+                      {displayedSites.length} site{displayedSites.length !== 1 ? 's' : ''}
                     </span>
                   </div>
 
                   <div className="flex flex-col flex-1">
-                    {/* Loading skeleton */}
-                    {finderLoading ? (
-                      Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className="flex items-center gap-3 py-3 border-b border-[#1F2937] last:border-0 animate-pulse">
-                          <div className="w-6 h-6 rounded-full bg-[#1F2937]" />
-                          <div className="flex-1 space-y-1.5">
-                            <div className="h-3 bg-[#1F2937] rounded w-3/4" />
-                            <div className="h-2.5 bg-[#1F2937]/60 rounded w-1/2" />
-                          </div>
-                          <div className="w-10 h-10 rounded-full bg-[#1F2937]" />
-                        </div>
-                      ))
-                    ) : displayedSites.length === 0 ? (
+                    {displayedSites.length === 0 ? (
                       <div className="flex-1 flex flex-col items-center justify-center text-center gap-2">
                         <p className="text-[#6B7280] text-[12px]">No sites match your criteria.</p>
-                        <p className="text-[#4B5563] text-[11px]">Try broadening your region or cooling filter.</p>
                       </div>
                     ) : (
                       displayedSites.slice(0, 5).map((site, index) => {
@@ -535,7 +521,7 @@ function Shell() {
                     )}
                   </div>
 
-                  {!finderLoading && displayedSites.length > 0 && (
+                  {displayedSites.length > 0 && (
                     <a className="text-[#10B981] text-xs hover:underline cursor-pointer mt-3 block text-right" data-testid="link-view-all">
                       View all sites &rarr;
                     </a>
@@ -669,9 +655,10 @@ function Shell() {
 
               </div>
             </div>
+            )}
 
-            {/* Site Detail card — below the map row */}
-            {selectedSite && (
+            {/* Site Detail card — Dashboard only */}
+            {activePage === 'dashboard' && selectedSite && (
               <div className="px-6 pb-6">
                 <SiteDetail
                   site={selectedSite}
