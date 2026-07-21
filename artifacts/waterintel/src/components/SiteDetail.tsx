@@ -2098,44 +2098,247 @@ function ReportDetailRows({ rows }: { rows: { label: string; value: React.ReactN
 }
 
 /* ─── Full Report Modal ────────────────────────────────────── */
+
+/* ── dimension scoring ──────────────────────────────────────── */
+interface DimScore {
+  key: string;
+  label: string;
+  score: number;
+  rationale: string;
+  icon: React.ElementType;
+  color: string;
+}
+
+function getDimensionScores(site: Site): DimScore[] {
+  const dims: DimScore[] = [];
+  const w = site.water, pw = site.power, cl = site.climate;
+  const co = site.connectivity, la = site.land, z = site.zoning;
+
+  if (w) {
+    const sc = w.summary.availabilityScore;
+    dims.push({
+      key: 'water', label: 'Water Access', score: sc, icon: Droplets, color: 'text-sky-400',
+      rationale: `${sc}/100 availability score — ${w.summary.distanceToInfrastructure} to supply, ` +
+        `${w.summary.reliability.toLowerCase()} reliability, ${w.detail.droughtRisk.toLowerCase()} drought risk at ${w.detail.cost}/m³`,
+    });
+  }
+
+  if (pw) {
+    const mw = pw.summary.availableCapacityMW;
+    const sc = Math.min(100, Math.round(mw / 2.5)); // 250 MW = 100
+    dims.push({
+      key: 'power', label: 'Power', score: sc, icon: Zap, color: 'text-amber-400',
+      rationale: `${mw} MW available — ${pw.summary.reliability.toLowerCase()} grid reliability, ` +
+        `${pw.detail.electricityPrice}/kWh, substation ${pw.summary.distanceToSubstation} away`,
+    });
+  }
+
+  if (cl) {
+    const heatDays = cl.detail.extremeHeatDays ?? 0;
+    const sc = Math.max(10, Math.min(90, 90 - heatDays));
+    dims.push({
+      key: 'climate', label: 'Climate / Cooling', score: sc, icon: Thermometer, color: 'text-rose-400',
+      rationale: `${heatDays} extreme heat days/year, ${cl.summary.peakSummerTemp} peak — ${cl.summary.estimatedPUEImpact}`,
+    });
+  }
+
+  if (co) {
+    const providers = co.summary.fiberProviders;
+    const redundant = co.summary.redundancy === 'Yes';
+    const sc = Math.min(100, providers * 30 + (redundant ? 40 : 15));
+    dims.push({
+      key: 'connectivity', label: 'Connectivity', score: sc, icon: Network, color: 'text-violet-400',
+      rationale: `${providers} fiber carrier${providers !== 1 ? 's' : ''}, redundancy: ${co.summary.redundancy}, ` +
+        `${co.summary.distanceToBackbone} to backbone`,
+    });
+  }
+
+  if (la) {
+    const floodMap: Record<string, number> = { Low: 80, Medium: 55, High: 30 };
+    const base = floodMap[la.summary.floodRisk] ?? 60;
+    const roadKm = parseFloat(la.detail.distanceToRoads);
+    const roadPenalty = !isNaN(roadKm) ? (roadKm > 5 ? 20 : roadKm > 2 ? 10 : 0) : 0;
+    const sc = Math.max(0, base - roadPenalty);
+    dims.push({
+      key: 'land', label: 'Land / Topography', score: sc, icon: MapPin, color: 'text-emerald-400',
+      rationale: `${la.summary.parcelSize} at ${la.summary.landPrice}, ${la.summary.floodRisk.toLowerCase()} flood risk, ` +
+        `${la.detail.distanceToRoads} to roads`,
+    });
+  }
+
+  if (z) {
+    const easeMap: Record<string, number> = { Easy: 90, Moderate: 60, Difficult: 30 };
+    const base = easeMap[z.detail.easeOfPermits] ?? 60;
+    const condPenalty = z.summary.dataCenterPermitted === 'Conditional' ? 15
+      : z.summary.dataCenterPermitted === 'No' ? 30 : 0;
+    const sc = Math.max(0, Math.min(100, base - condPenalty));
+    const sezSuffix = z.summary.sezStatus && !['N/A', 'None', 'No', ''].includes(z.summary.sezStatus)
+      ? ` (${z.summary.sezStatus})` : '';
+    dims.push({
+      key: 'zoning', label: 'Zoning & Regulatory', score: sc, icon: Shield, color: 'text-indigo-400',
+      rationale: `DC permitted: ${z.summary.dataCenterPermitted}, ${z.detail.easeOfPermits.toLowerCase()} process, ` +
+        `${z.summary.permittingSpeed} to approve${sezSuffix}`,
+    });
+  }
+
+  return dims;
+}
+
+function ordinalSuffix(n: number) {
+  const v = n % 100;
+  if (v >= 11 && v <= 13) return 'th';
+  return ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th';
+}
+
+function barColor(score: number) {
+  if (score >= 70) return 'bg-[#10B981]';
+  if (score >= 45) return 'bg-amber-400';
+  return 'bg-red-400';
+}
+
 /* ── narrative helper ───────────────────────────────────────── */
 function generateReportNarrative(site: Site): string {
-  const w  = site.water;
-  const pw = site.power;
-  const cl = site.climate;
-  const co = site.connectivity;
-  const la = site.land;
-  const z  = site.zoning;
-
-  const dims: { name: string; score: number }[] = [];
-  if (w)  dims.push({ name: 'water access',         score: w.summary.availabilityScore });
-  if (pw) dims.push({ name: 'power capacity',        score: pw.summary.availableCapacityMW >= 100 ? 85 : pw.summary.availableCapacityMW >= 50 ? 70 : 50 });
-  if (cl) {
-    const pue = parseFloat(cl.summary.estimatedPUEImpact);
-    dims.push({ name: 'climate conditions',          score: isNaN(pue) ? 65 : pue <= 1.2 ? 85 : pue <= 1.4 ? 70 : pue <= 1.6 ? 55 : 40 });
+  const dims = getDimensionScores(site);
+  if (dims.length === 0) {
+    return `${site.name} is a candidate site under evaluation. Detailed dimension data is still being collected.`;
   }
-  if (co) dims.push({ name: 'connectivity',          score: co.summary.fiberProviders >= 2 ? 85 : co.summary.fiberProviders === 1 ? 65 : 40 });
-  if (la) dims.push({ name: 'land & topography',     score: la.summary.floodRisk === 'Low' ? 85 : la.summary.floodRisk === 'High' ? 40 : 65 });
-  if (z)  dims.push({ name: 'regulatory environment', score: z.summary.dataCenterPermitted === 'Yes' ? (z.detail.easeOfPermits === 'Easy' ? 85 : 70) : 50 });
 
-  if (dims.length === 0) return `${site.name} is a candidate site under evaluation. Detailed dimension data is still being collected.`;
+  const sorted = [...dims].sort((a, b) => b.score - a.score);
+  const top2   = sorted.slice(0, 2);
+  const bot2   = sorted.slice(-2).reverse(); // lowest first
+  const overallWord = site.overallScore >= 85 ? 'exceptional'
+    : site.overallScore >= 75 ? 'strong'
+    : site.overallScore >= 60 ? 'solid' : 'moderate';
 
-  const sorted  = [...dims].sort((a, b) => b.score - a.score);
-  const top2    = sorted.slice(0, 2).map(d => d.name);
-  const bottom  = sorted[sorted.length - 1];
-  const strengthStr = top2.length >= 2 ? `${top2[0]} and ${top2[1]}` : top2[0];
-  const overallWord = site.overallScore >= 85 ? 'exceptional' : site.overallScore >= 75 ? 'strong' : site.overallScore >= 60 ? 'solid' : 'moderate';
+  // Strength sentences
+  const strengthParts = top2.map(d => {
+    if (d.key === 'water') {
+      const w = site.water!;
+      return `${d.label.toLowerCase()} (${d.score}/100) — ${w.summary.availability_score ?? d.score}/100 availability with ` +
+        `${w.summary.reliability.toLowerCase()} reliability at ${w.detail.cost}/m³`;
+    }
+    if (d.key === 'power') {
+      const pw = site.power!;
+      return `${d.label.toLowerCase()} (${pw.summary.availableCapacityMW} MW available, ` +
+        `${pw.summary.reliability.toLowerCase()} grid, ${pw.detail.electricityPrice}/kWh)`;
+    }
+    if (d.key === 'connectivity') {
+      const co = site.connectivity!;
+      return `${d.label.toLowerCase()} (${co.summary.fiberProviders} carrier${co.summary.fiberProviders !== 1 ? 's' : ''}, ` +
+        `${co.summary.distanceToBackbone} to backbone)`;
+    }
+    if (d.key === 'climate') {
+      const cl = site.climate!;
+      return `${d.label.toLowerCase()} (${cl.detail.extremeHeatDays ?? 0} extreme heat days/year, ` +
+        `${cl.summary.estimatedPUEImpact.split(' ')[0]} PUE impact)`;
+    }
+    if (d.key === 'land') {
+      const la = site.land!;
+      return `${d.label.toLowerCase()} (${la.summary.parcelSize}, ${la.summary.floodRisk.toLowerCase()} flood risk)`;
+    }
+    if (d.key === 'zoning') {
+      const z = site.zoning!;
+      return `${d.label.toLowerCase()} (${z.detail.easeOfPermits.toLowerCase()} permitting, ` +
+        `${z.summary.permittingSpeed} to approve)`;
+    }
+    return d.label.toLowerCase();
+  });
+  const strengthStr = strengthParts.length >= 2
+    ? `${strengthParts[0]} and ${strengthParts[1]}`
+    : strengthParts[0] ?? '';
 
+  // Constraint sentence — only if genuinely weak
+  const realWeaknesses = bot2.filter(d => d.score < 60);
   let caveat = '';
-  if (bottom.score < 60)      caveat = ` However, ${bottom.name} presents the most notable constraint and warrants further due diligence.`;
-  else if (bottom.score < 75) caveat = ` ${bottom.name.charAt(0).toUpperCase() + bottom.name.slice(1)} is rated moderate and may benefit from targeted mitigation planning.`;
-  else                         caveat = ` All evaluated dimensions meet or exceed baseline requirements for large-scale data center deployment.`;
+  if (realWeaknesses.length > 0) {
+    const worst = realWeaknesses[0];
+    if (worst.key === 'power') {
+      const pw = site.power!;
+      caveat = ` Power infrastructure presents the most significant constraint: only ${pw.summary.availableCapacityMW} MW available ` +
+        `with ${pw.summary.reliability.toLowerCase()} reliability and ${pw.detail.outageHistory?.toLowerCase() ?? 'limited track record'}.`;
+    } else if (worst.key === 'water') {
+      const w = site.water!;
+      caveat = ` Water access is critically constrained: availability score of ${w.summary.availabilityScore}/100, ` +
+        `${w.detail.droughtRisk.toLowerCase()} drought risk, and supply at ${w.detail.cost}/m³.`;
+    } else if (worst.key === 'zoning') {
+      const z = site.zoning!;
+      caveat = ` Regulatory complexity is the primary risk factor: DC permitted as "${z.summary.dataCenterPermitted}", ` +
+        `${z.detail.easeOfPermits.toLowerCase()} permitting, and ${z.summary.permittingSpeed} to approve.`;
+    } else if (worst.key === 'connectivity') {
+      const co = site.connectivity!;
+      caveat = ` Connectivity is limited to ${co.summary.fiberProviders} carrier${co.summary.fiberProviders !== 1 ? 's' : ''} ` +
+        `with ${co.summary.distanceToBackbone} to the nearest backbone — a meaningful risk for latency-sensitive workloads.`;
+    } else if (worst.key === 'climate') {
+      const cl = site.climate!;
+      caveat = ` The ${cl.detail.extremeHeatDays ?? 0} extreme heat days per year impose a sustained cooling burden ` +
+        `(${cl.summary.estimatedPUEImpact}), requiring robust active cooling investment.`;
+    } else if (worst.key === 'land') {
+      const la = site.land!;
+      caveat = ` Land suitability is a concern: ${la.summary.floodRisk.toLowerCase()} flood risk and ` +
+        `${la.detail.distanceToRoads} to the nearest road limit site access.`;
+    }
+  } else {
+    caveat = ' All six dimensions meet or exceed baseline thresholds for large-scale data center deployment.';
+  }
 
-  const sezNote = z?.summary.sezStatus && !['N/A', 'None', 'No', ''].includes(z.summary.sezStatus)
-    ? ` The site also benefits from ${z.summary.sezStatus} status, potentially reducing development timeline and fiscal burden.`
-    : '';
+  return `${site.name} achieves a${overallWord.startsWith('e') ? 'n' : ''} ${overallWord} overall score of ` +
+    `${site.overallScore}/100, with particular strength in ${strengthStr}.${caveat}`;
+}
 
-  return `${site.name} achieves an ${overallWord} overall score of ${site.overallScore}/100, with particular strength in ${strengthStr}.${caveat}${sezNote}`;
+/* ── Why This Ranking section ────────────────────────────────── */
+function WhyRankingSection({ site }: { site: Site }) {
+  const allSites = getSitesSortedByScore();
+  const rank = allSites.findIndex(s => s.id === site.id) + 1;
+  const total = allSites.length;
+  const dims = [...getDimensionScores(site)].sort((a, b) => b.score - a.score);
+  const weakDims = dims.filter(d => d.score < 55);
+
+  let comparedNote = '';
+  if (rank === 1) {
+    comparedNote = `This site ranks 1st of ${total} in the current dataset — highest overall score.`;
+  } else if (rank <= 5) {
+    const top2Labels = dims.slice(0, 2).map(d => d.label.toLowerCase());
+    comparedNote = `This site ranks ${rank}${ordinalSuffix(rank)} of ${total} in the current dataset, driven by strong ${top2Labels[0]} and ${top2Labels[1]}.`;
+  } else {
+    const reason = weakDims.length > 0
+      ? `, primarily due to below-average ${weakDims.map(d => d.label.toLowerCase()).join(' and ')}`
+      : '';
+    comparedNote = `This site ranks ${rank}${ordinalSuffix(rank)} of ${total} in the current dataset${reason}.`;
+  }
+
+  return (
+    <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-5">
+      <p className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-widest mb-4">Why This Ranking</p>
+      <div className="flex flex-col gap-4 mb-4">
+        {dims.map(dim => {
+          const Icon = dim.icon;
+          return (
+            <div key={dim.key}>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="flex items-center gap-1.5 text-[12px] font-medium text-[#D1D5DB]">
+                  <Icon className={`w-3.5 h-3.5 ${dim.color}`} />
+                  {dim.label}
+                </span>
+                <span className={`text-[12px] font-bold ${dim.score >= 70 ? 'text-[#10B981]' : dim.score >= 45 ? 'text-amber-400' : 'text-red-400'}`}>
+                  {dim.score}
+                </span>
+              </div>
+              <div className="h-2 bg-[#1F2937] rounded-full overflow-hidden mb-1">
+                <div
+                  className={`h-full rounded-full ${barColor(dim.score)}`}
+                  style={{ width: `${dim.score}%` }}
+                />
+              </div>
+              <p className="text-[11px] text-[#6B7280] leading-relaxed">{dim.rationale}</p>
+            </div>
+          );
+        })}
+      </div>
+      <div className="bg-[#111827] border border-[#1F2937] rounded-lg px-3.5 py-2.5">
+        <p className="text-[12px] text-[#9CA3AF] leading-relaxed">{comparedNote}</p>
+      </div>
+    </div>
+  );
 }
 
 function FullReportModal({ site, onClose }: { site: Site; onClose: () => void }) {
@@ -2148,9 +2351,7 @@ function FullReportModal({ site, onClose }: { site: Site; onClose: () => void })
   const z = site.zoning;
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-  const waterScore = w?.summary.availabilityScore ?? site.waterAccess?.score ?? 0;
-  const infraScore = site.infrastructure?.score ?? 0;
-  const regScore   = site.regulatory?.score   ?? 0;
+  const dimScores = getDimensionScores(site);
 
   const relColor = (r: string) =>
     r === 'High' ? 'text-[#10B981]' : r === 'Low' ? 'text-red-400' : 'text-amber-400';
@@ -2225,49 +2426,33 @@ function FullReportModal({ site, onClose }: { site: Site; onClose: () => void })
                 <span className={`text-[12px] font-semibold ${sc.text}`}>Overall Score</span>
               </div>
               <div className="flex-1 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {waterScore > 0 && (
-                  <div className="bg-[#111827] border border-[#1F2937] rounded-lg p-3">
-                    <p className="text-[11px] text-[#6B7280] mb-1">Water Access</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-[22px] font-bold text-sky-400">{waterScore}</span>
-                      <span className="text-[11px] text-[#6B7280]">/ 100</span>
+                {dimScores.map(dim => {
+                  const Icon = dim.icon;
+                  const scoreVal = dim.score;
+                  const valColor = scoreVal >= 70 ? 'text-[#10B981]' : scoreVal >= 45 ? 'text-amber-400' : 'text-red-400';
+                  return (
+                    <div key={dim.key} className="bg-[#111827] border border-[#1F2937] rounded-lg p-3">
+                      <p className="flex items-center gap-1 text-[11px] text-[#6B7280] mb-1">
+                        <Icon className={`w-3 h-3 ${dim.color}`} />
+                        {dim.label}
+                      </p>
+                      <div className="flex items-baseline gap-1">
+                        <span className={`text-[22px] font-bold ${valColor}`}>{scoreVal}</span>
+                        <span className="text-[11px] text-[#6B7280]">/ 100</span>
+                      </div>
                     </div>
-                  </div>
-                )}
-                {infraScore > 0 && (
-                  <div className="bg-[#111827] border border-[#1F2937] rounded-lg p-3">
-                    <p className="text-[11px] text-[#6B7280] mb-1">Infrastructure</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-[22px] font-bold text-amber-400">{infraScore}</span>
-                      <span className="text-[11px] text-[#6B7280]">/ 100</span>
-                    </div>
-                  </div>
-                )}
-                {regScore > 0 && (
-                  <div className="bg-[#111827] border border-[#1F2937] rounded-lg p-3">
-                    <p className="text-[11px] text-[#6B7280] mb-1">Regulatory</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className={`text-[22px] font-bold ${regScore >= 70 ? 'text-[#10B981]' : regScore >= 50 ? 'text-amber-400' : 'text-red-400'}`}>{regScore}</span>
-                      <span className="text-[11px] text-[#6B7280]">/ 100</span>
-                    </div>
-                  </div>
-                )}
-                {pw && (
-                  <div className="bg-[#111827] border border-[#1F2937] rounded-lg p-3">
-                    <p className="text-[11px] text-[#6B7280] mb-1">Power Capacity</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-[22px] font-bold text-amber-300">{pw.summary.availableCapacityMW}</span>
-                      <span className="text-[11px] text-[#6B7280]">MW</span>
-                    </div>
-                  </div>
-                )}
+                  );
+                })}
               </div>
             </div>
-            {/* AI-style narrative */}
+            {/* Narrative */}
             <p className="text-[13.5px] leading-relaxed text-[#9CA3AF] border-t border-[#1F2937] pt-4">
               {generateReportNarrative(site)}
             </p>
           </div>
+
+          {/* ── Why This Ranking ── */}
+          <WhyRankingSection site={site} />
 
           {/* ── Water ── */}
           {w && (

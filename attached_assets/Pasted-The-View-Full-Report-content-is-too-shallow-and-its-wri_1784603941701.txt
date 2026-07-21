@@ -1,0 +1,52 @@
+The "View Full Report" content is too shallow and its written summary
+doesn't reliably reflect the site's actual data. Rebuild this into a
+genuinely in-depth, data-grounded report:
+
+1. CONFIRM ALL SIX DIMENSIONS ARE PRESENT: the report must show Water,
+   Power, Climate, Connectivity, Land, and Zoning sections — not the old
+   4-field Water Access / Infrastructure / Regulatory / Power Capacity
+   layout. If any of these six sections are missing from the report
+   component, add them, pulling from site.water, site.power,
+   site.climate, site.connectivity, site.land, and site.zoning.
+
+2. FIX THE NARRATIVE GENERATION LOGIC: the summary paragraph must be
+   generated directly from the site's actual scores, not from a fixed set
+   of generic sentences. Specifically:
+   - Identify the site's actual 2 highest-scoring dimensions and 2
+     lowest-scoring dimensions by comparing the six dimension scores
+     against each other for THIS site
+   - The narrative must only ever describe a dimension as a "strength" if
+     it's genuinely among that site's highest scores, and only describe
+     one as a "weakness" or "concern" if it's genuinely among the lowest —
+     never praise a dimension that scored low, never flag a dimension that
+     scored high, and never reference a dimension that isn't part of the
+     six-dimension data structure at all
+   - Do not use vague filler like "may benefit from targeted mitigation
+     planning" unless there's an actual specific issue from the site's
+     detail fields to point to instead
+
+3. ADD A "WHY THIS RANKING" SECTION: add a dedicated section, right after
+   the Executive Summary, that explicitly breaks down how the overall
+   score was calculated and where this site stands out or falls short.
+   Include:
+   - A visual weighted breakdown showing each of the six dimension scores
+     as a horizontal bar, sorted from highest to lowest, so it's
+     immediately visual which dimensions are dragging the score down
+   - For each dimension, one specific data-backed sentence explaining its
+     contribution — e.g. "Power (82/100): 120 MW available capacity with
+     high reliability supports large-scale deployment"
+   - A short "Compared to other sites" line — e.g. "This site ranks 3rd of
+     28 in the current dataset, primarily due to below-average zoning
+     readiness" — computed by actually comparing this site's score against
+     the full site list, not a hardcoded claim
+
+4. Keep the existing full-detail sections below the new "Why This
+   Ranking" section, so the report still shows the complete underlying
+   data — the new section answers "why," the existing sections answer
+   "what."
+
+Test this on at least 3 sites with different score profiles (one
+high-scoring, one low-scoring, one mixed) and read the generated narrative
+for each — confirm every claim in the text is actually true of that site's
+actual numbers, with no contradictions between the prose and the data
+shown beside it.
