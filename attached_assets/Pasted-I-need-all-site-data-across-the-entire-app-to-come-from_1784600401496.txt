@@ -1,0 +1,39 @@
+I need all site data across the entire app to come from one single shared
+source, and I want to expand it to a much larger, more realistic dataset.
+
+1. Audit the codebase for every place site data is defined or duplicated —
+   check src/data/sites.js, any inline arrays in Dashboard, Site Finder,
+   Water Infrastructure, Data Centers, Projects, or Compare components,
+   and anywhere else a site's name, coordinates, or score might be
+   hardcoded separately. Consolidate ALL of it into src/data/sites.js as
+   the single source of truth. Every component anywhere in the app that
+   displays site information (name, region, coordinates, scores, the six
+   dimension fields, nearby infrastructure, documents, etc.) must import
+   and read from this one file — no component should have its own local
+   copy or a differently-shaped version of the same site.
+
+2. If you find inconsistencies (e.g. "Heet Industrial City" has different
+   coordinates or scores in two different places), resolve them by keeping
+   whichever version is most complete/detailed and deleting the other.
+
+3. Expand the dataset in src/data/sites.js from its current ~8 sites to at
+   least 25-30 sites, spread realistically across Saudi regions: Riyadh,
+   Eastern Province (Dammam/Dhahran/Jubail), Makkah (Jeddah), Madinah,
+   Qassim, Asir, and 2-3 in a NEOM/Tabuk-adjacent area. Vary scores
+   realistically (don't cluster everything in the 70-95 range — include
+   some genuinely weak sites in the 20-50 range so filtering/sorting
+   produces meaningfully different results). Make sure every new site has
+   COMPLETE data across all six dimensions (water, power, climate,
+   connectivity, land, zoning) plus coordinates, nearby infrastructure,
+   and cooling impact data — an incomplete site will break other pages
+   that expect these fields.
+
+4. After this change, verify: Dashboard's ranked list and map, Site
+   Finder's results, Water Infrastructure's nearby-data-center references,
+   Data Centers' nearby-water-infrastructure references, and the Compare
+   tab all reflect the same expanded, consistent dataset — not stale or
+   duplicated data left over from before this change.
+
+This is a data consolidation and expansion task — don't change the visual
+layout or functionality of any page, just fix what data feeds them and how
+much of it there is.
