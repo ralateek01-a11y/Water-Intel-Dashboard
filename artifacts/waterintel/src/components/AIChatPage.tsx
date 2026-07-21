@@ -56,6 +56,88 @@ const PROMPT_GROUPS = [
 // ── Helpers ────────────────────────────────────────────────────────────
 function uid() { return Math.random().toString(36).slice(2); }
 
+// Returns true if the site's name has a meaningful word present in the message.
+function siteNamedInMessage(site: { name: string }, message: string): boolean {
+  const msg = message.toLowerCase();
+  return site.name
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length > 3)
+    .some((w) => msg.includes(w));
+}
+
+// Build a condensed context payload to keep request bodies small.
+// • Full detail is sent for: (a) sites mentioned by name in the user message,
+//   (b) sites referenced by the selected project's recommendedSiteIds.
+// • Everything else gets a compact summary (summary-level fields only).
+function buildCondensedContext(
+  allSites: unknown[],
+  allWaterInfra: unknown[],
+  allDataCenters: unknown[],
+  selectedProject: Record<string, unknown> | null,
+  userMessage: string,
+) {
+  // Determine which site IDs deserve full detail
+  const fullDetailIds = new Set<string>();
+  if (Array.isArray((selectedProject as any)?.recommendedSiteIds)) {
+    for (const id of (selectedProject as any).recommendedSiteIds) fullDetailIds.add(id);
+  }
+  for (const site of allSites as any[]) {
+    if (siteNamedInMessage(site, userMessage)) fullDetailIds.add(site.id);
+  }
+
+  const condensedSites = (allSites as any[]).map((site) => {
+    if (fullDetailIds.has(site.id)) return site; // full detail for relevant sites
+    // Compact summary: scores + top-level summaries only
+    return {
+      id: site.id,
+      name: site.name,
+      region: site.region,
+      overallScore: site.overallScore,
+      rating: site.rating,
+      distanceFromRiyadh: site.distanceFromRiyadh,
+      coordinates: site.coordinates,
+      water:        { summary: site.water?.summary },
+      power:        { summary: site.power?.summary },
+      climate:      { summary: site.climate?.summary },
+      connectivity: { summary: site.connectivity?.summary },
+      land:         { summary: site.land?.summary },
+      zoning:       { summary: site.zoning?.summary },
+      // Keep small but useful fields
+      regulatory:   site.regulatory,
+      coolingImpact: site.coolingImpact,
+    };
+  });
+
+  const condensedWater = (allWaterInfra as any[]).map((wi) => ({
+    id: wi.id,
+    name: wi.name,
+    type: wi.type,
+    region: wi.region,
+    capacity: wi.capacity ?? wi.totalCapacity,
+    dailyOutputM3: wi.dailyOutputM3,
+    status: wi.status,
+    coordinates: wi.coordinates,
+  }));
+
+  const condensedDC = (allDataCenters as any[]).map((dc) => ({
+    id: dc.id,
+    name: dc.name,
+    operator: dc.operator,
+    region: dc.region,
+    totalCapacityMW: dc.totalCapacityMW,
+    status: dc.status,
+    coordinates: dc.coordinates,
+  }));
+
+  return {
+    sites: condensedSites,
+    waterInfrastructure: condensedWater,
+    dataCenters: condensedDC,
+    selectedProject,
+  };
+}
+
 // ── Typing dots ────────────────────────────────────────────────────────
 function TypingDots() {
   return (
@@ -281,18 +363,18 @@ export function AIChatPage({ selectedSite, initialMessage, onConsumeInitialMessa
       : null;
 
     try {
+      const context = buildCondensedContext(
+        sites,
+        waterInfrastructure,
+        dataCenters,
+        selectedProject,
+        text.trim(),
+      );
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: history,
-          context: {
-            sites,
-            waterInfrastructure,
-            dataCenters,
-            selectedProject,
-          },
-        }),
+        body: JSON.stringify({ messages: history, context }),
       });
 
       if (!res.ok) {

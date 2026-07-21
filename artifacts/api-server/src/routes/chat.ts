@@ -50,6 +50,10 @@ router.post("/chat", async (req: Request, res: Response) => {
     "- When referencing water infrastructure or data centers, use the exact names from the data.\n" +
     "- Keep answers concise and professional. Use markdown formatting — bullet lists, bold, and tables — where it improves clarity.";
 
+  // Log system prompt size for monitoring
+  const systemKB = (system.length / 1024).toFixed(1);
+  console.log(`[chat] system prompt: ${systemKB} KB | sites: ${ctx.sites.length} | messages: ${messages.length}`);
+
   // SSE headers
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
