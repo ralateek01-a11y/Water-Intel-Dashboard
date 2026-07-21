@@ -10,7 +10,6 @@ import { WaterInfrastructurePage } from './components/WaterInfrastructurePage';
 import { DataCentersPage } from './components/DataCentersPage';
 import { DocumentsPage } from './components/DocumentsPage';
 import { 
-  Droplet, 
   LayoutDashboard, 
   FolderOpen, 
   MapPin, 
@@ -31,6 +30,21 @@ import {
 } from 'lucide-react';
 
 type Page = 'dashboard' | 'site-finder' | 'ai-chat' | 'projects' | 'project-detail' | 'water-infrastructure' | 'data-centers' | 'documents';
+
+/* ── Optima logo mark ───────────────────────────────────────── */
+function OptimaLogo({ size = 28 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="28" height="28" rx="6" fill="#10B981" fillOpacity="0.12" />
+      <circle cx="14" cy="14" r="7.5" stroke="#10B981" strokeWidth="2" />
+      <circle cx="14" cy="14" r="2.5" fill="#10B981" />
+      <line x1="14" y1="4"    x2="14" y2="7.5"  stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="14" y1="20.5" x2="14" y2="24"   stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="4"  y1="14"   x2="7.5" y2="14"  stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="20.5" y1="14" x2="24"  y2="14"  stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 function Shell() {
   const sortedSites = getSitesSortedByScore();
@@ -334,11 +348,11 @@ function Shell() {
         {/* Logo Area */}
         <div className="pt-6 pb-4 px-4 flex flex-col gap-1 border-b border-[#1F2937]">
           <div className="flex items-center gap-2">
-            <Droplet className="w-[28px] h-[28px] text-[#10B981]" fill="currentColor" fillOpacity={0.2} />
-            <span className="text-[18px] font-bold text-white tracking-wide">WaterIntel</span>
+            <OptimaLogo size={28} />
+            <span className="text-[18px] font-bold text-white tracking-wide">Optima</span>
           </div>
           <p className="text-[10px] text-[#6B7280] leading-snug mt-1">
-            AI-Powered Water Intelligence Platform
+            An AI-powered site selection platform
           </p>
         </div>
 

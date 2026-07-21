@@ -2634,7 +2634,7 @@ function FullReportModal({ site, onClose }: { site: Site; onClose: () => void })
 
           {/* Footer */}
           <div className="flex items-center justify-between text-[11px] text-[#4B5563] pt-2 border-t border-[#1F2937]">
-            <span>WaterIntel — AI-Powered Water Intelligence Platform</span>
+            <span>Optima — An AI-powered site selection platform</span>
             <span>Confidential · For internal use only</span>
           </div>
         </div>
