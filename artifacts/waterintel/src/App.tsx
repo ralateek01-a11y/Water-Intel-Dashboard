@@ -53,14 +53,21 @@ function Shell() {
   const [finderLoading, setFinderLoading] = useState(false);
   const [finderHasRun, setFinderHasRun] = useState(false);
   const [finderResults, setFinderResults] = useState<typeof sortedSites>([]);
+  const [finderMatchLabel, setFinderMatchLabel] = useState('');
 
   // Parse "+1,800 m3/day" → 1800
   function parseCoolingM3(str: string): number {
     return parseInt(str.replace(/[^0-9]/g, ''), 10) || 0;
   }
 
+  // Parse "SAR 2.10/m3" → 2.10
+  function parseSARValue(str: string): number {
+    const m = str.match(/[\d.]+/);
+    return m ? parseFloat(m[0]) : 0;
+  }
+
   // +/– score based on how efficient the chosen cooling tech is at a given site
-  // (lower additional water draw = better fit = higher score)
+  // (used only by Dashboard quick filters — not Site Finder)
   function coolingAdjustment(site: (typeof sortedSites)[0], cooling: string): number {
     const impactStr =
       cooling === 'Immersion Cooling'   ? site.coolingImpact.immersionCooling :
@@ -75,23 +82,112 @@ function Shell() {
     return -4;
   }
 
+  // Compute a 0-100 match score from real site data against the user's requirements.
+  // Weights: power 30 | site quality 25 | cooling fit 20 | timeline 15 | budget 10
+  function computeMatchScore(
+    site: (typeof sortedSites)[0],
+    { power, cooling, timeline, budget }: { power: string; cooling: string; timeline: string; budget: string }
+  ): number {
+    let score = 0;
+
+    // ── 1. POWER (30 pts) ────────────────────────────────────────────────────
+    const cap = (site as any).power?.summary?.availableCapacityMW ?? 150;
+    const reqMW = parseFloat(power) || 0;
+    if (reqMW > 0) {
+      const surplus = (cap - reqMW) / reqMW;
+      score += surplus >= 1.0 ? 30 : surplus >= 0.5 ? 24 : surplus >= 0.2 ? 18 : 10;
+    } else {
+      score += 20; // no power requirement specified → neutral
+    }
+
+    // ── 2. SITE QUALITY (25 pts) ─────────────────────────────────────────────
+    score += (site.overallScore / 100) * 25;
+
+    // ── 3. COOLING FIT (20 pts) ──────────────────────────────────────────────
+    const coolKey =
+      cooling === 'Immersion Cooling'    ? 'immersionCooling' :
+      cooling === 'Direct Liquid Cooling' ? 'dlcCooling' :
+      cooling === 'Air Cooling'           ? 'airCooling' :
+      'liquidCooling';
+    const waterDraw = parseCoolingM3((site.coolingImpact as any)?.[coolKey] ?? '+1500 m3/day');
+    score += waterDraw < 500 ? 20 : waterDraw < 800 ? 16 : waterDraw < 1200 ? 12 : waterDraw < 1600 ? 7 : 3;
+
+    // ── 4. TIMELINE FIT (15 pts) ─────────────────────────────────────────────
+    const targetYear = parseInt(timeline) || 2027;
+    const projection: { year: number; score: number }[] =
+      (site as any).forecastDetail?.scoreProjection ?? [];
+    let projectedScore = site.overallScore;
+    if (projection.length > 0) {
+      const closest = [...projection].sort(
+        (a, b) => Math.abs(a.year - targetYear) - Math.abs(b.year - targetYear)
+      );
+      projectedScore = closest[0].score;
+    }
+    score += (projectedScore / 100) * 15;
+
+    // ── 5. BUDGET FIT (10 pts) ───────────────────────────────────────────────
+    const budgetNum = parseFloat(budget) || 0;
+    if (budgetNum > 0) {
+      const budgetSAR = budgetNum * 1_000_000;
+      const landPricePerM2 = parseSARValue((site as any).land?.summary?.landPrice ?? 'SAR 500/m2');
+      const elecPerKwh     = parseSARValue((site as any).power?.detail?.electricityPrice ?? 'SAR 0.25/kWh');
+      const waterPerM3     = parseSARValue((site as any).water?.detail?.cost ?? 'SAR 3.00/m3');
+      // Estimate: 10 ha land + 3 years of power + 3 years of cooling water
+      const effectiveMW = reqMW || 50;
+      const landCost    = landPricePerM2 * 100_000;
+      const annualElec  = effectiveMW * 1_000 * 0.85 * 8_760 * elecPerKwh;
+      const annualWater = waterDraw * 365 * waterPerM3;
+      const totalEst    = landCost + (annualElec + annualWater) * 3;
+      const ratio = totalEst / budgetSAR;
+      score += ratio <= 0.7 ? 10 : ratio <= 0.9 ? 8 : ratio <= 1.0 ? 5 : ratio <= 1.2 ? 2 : 0;
+    } else {
+      score += 10; // no budget constraint → full points
+    }
+
+    return Math.round(Math.min(100, Math.max(0, score)));
+  }
+
   function runFinder() {
     setFinderLoading(true);
     setFinderHasRun(true);
     setTimeout(() => {
+      const reqMW = parseFloat(finderPower) || 0;
+
+      // Region hard-filter
       let pool = getSitesSortedByScore();
       if (finderRegion !== 'All Regions') {
         pool = pool.filter((s) => s.region === finderRegion);
       }
+
+      // Power hard-filter: exclude sites that genuinely can't meet the requirement
+      if (reqMW > 0) {
+        pool = pool.filter((s) => {
+          const cap = (s as any).power?.summary?.availableCapacityMW ?? 150;
+          return cap >= reqMW;
+        });
+      }
+
+      // Score every remaining site
+      const params = { power: finderPower, cooling: finderCooling, timeline: finderTimeline, budget: finderBudget };
       const rescored = pool
+        .map((s) => ({ ...s, overallScore: computeMatchScore(s, params), rating: '' }))
         .map((s) => ({
           ...s,
-          overallScore: Math.min(100, Math.max(0, s.overallScore + coolingAdjustment(s, finderCooling))),
+          rating: s.overallScore >= 80 ? 'Excellent' : s.overallScore >= 60 ? 'Good' : s.overallScore >= 40 ? 'Moderate' : 'Weak',
         }))
         .sort((a, b) => b.overallScore - a.overallScore);
+
       setFinderResults(rescored);
-      // Auto-select the top result
       if (rescored.length > 0) setSelectedSiteId(rescored[0].id);
+
+      // Build the human-readable match label shown under the results
+      const parts: string[] = [];
+      if (reqMW > 0) parts.push(`${reqMW} MW`);
+      parts.push(finderCooling);
+      if (finderRegion !== 'All Regions') parts.push(`in ${finderRegion}`);
+      parts.push(`by ${finderTimeline}`);
+      setFinderMatchLabel(parts.join(', '));
+
       setFinderLoading(false);
     }, 800);
   }
@@ -477,8 +573,13 @@ function Shell() {
                       <option>All Regions</option>
                       <option>Riyadh</option>
                       <option>Eastern</option>
+                      <option>Makkah</option>
+                      <option>Madinah</option>
                       <option>Qassim</option>
-                      <option>NEOM</option>
+                      <option>Tabuk</option>
+                      <option>Asir</option>
+                      <option>Hail</option>
+                      <option>Jizan</option>
                     </select>
                   </div>
 
@@ -560,6 +661,162 @@ function Shell() {
               </div>
             </div>
             )}
+
+            {/* ── Site Finder results — three-column row ── */}
+            {activePage === 'site-finder' && finderHasRun && !finderLoading && (
+            <div className="h-[420px] flex-shrink-0 px-6 pt-0 pb-4 flex gap-4">
+
+              {/* Left — Ranked match list */}
+              <div className="w-[280px] flex-shrink-0 overflow-y-auto">
+                <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-4 h-full flex flex-col">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h2 className="text-sm font-semibold text-white">Best Matches</h2>
+                    <span className="bg-[#1F2937] text-[#9CA3AF] rounded-full px-2 py-0.5 text-[10px] font-medium leading-tight">
+                      {finderResults.length} site{finderResults.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  {finderMatchLabel && (
+                    <p className="text-[10px] text-[#10B981] mb-3 leading-snug">
+                      Ranked by match to your {finderMatchLabel}
+                    </p>
+                  )}
+                  <div className="flex flex-col flex-1 overflow-y-auto">
+                    {finderResults.length === 0 ? (
+                      <div className="flex-1 flex flex-col items-center justify-center text-center gap-2 py-8">
+                        <p className="text-[#6B7280] text-[12px]">No sites meet your power requirement.</p>
+                        <p className="text-[10px] text-[#4B5563]">Try reducing the MW or selecting "All Regions".</p>
+                      </div>
+                    ) : (
+                      finderResults.slice(0, 8).map((site, index) => {
+                        const isSelected = site.id === selectedSiteId;
+                        const isLast = index === Math.min(7, finderResults.length - 1);
+                        const sc = getScoreColors(site.overallScore);
+                        return (
+                          <div
+                            key={site.id}
+                            className={`
+                              flex items-center gap-3 py-3 cursor-pointer
+                              ${!isLast && !isSelected ? 'border-b border-[#1F2937]' : ''}
+                              ${isSelected ? 'bg-[#10B981]/8 rounded-lg border border-[#10B981]/20 px-2 mx-[-8px]' : ''}
+                            `}
+                            onClick={() => setSelectedSiteId(site.id)}
+                          >
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${sc.bg} ${sc.text}`}>
+                              {index + 1}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-white truncate">{site.name}</div>
+                              <div className="text-xs text-[#6B7280] truncate">{site.region}</div>
+                            </div>
+                            <div className="flex flex-col items-center justify-center">
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2 ${sc.border} ${sc.bg} ${sc.text}`}>
+                                {site.overallScore}
+                              </div>
+                              <div className={`text-[10px] mt-0.5 ${sc.text} font-medium`}>{site.rating}</div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Center — Map */}
+              <div className="flex-1 min-w-0">
+                <SiteMap
+                  selectedSiteId={selectedSiteId}
+                  onSiteSelect={setSelectedSiteId}
+                  sitesToDisplay={finderResults.length > 0 ? finderResults : allSites}
+                />
+              </div>
+
+              {/* Right — Match score panel */}
+              {(() => {
+                const fSite = finderResults.find(s => s.id === selectedSiteId) ?? finderResults[0] ?? null;
+                if (!fSite) return null;
+                const sc = getScoreColors(fSite.overallScore);
+                return (
+                  <div className="w-[260px] flex-shrink-0 overflow-y-auto">
+                    <div className="bg-[#111827] border border-[#1F2937] rounded-xl p-5 h-full flex flex-col">
+                      <div className="flex justify-between items-center mb-1">
+                        <h2 className="text-sm font-semibold text-white">Match Score</h2>
+                        <span className="text-[#6B7280] text-xs truncate max-w-[110px]">{fSite.name}</span>
+                      </div>
+                      {finderMatchLabel && (
+                        <p className="text-[9px] text-[#4B5563] mb-3 leading-snug">vs. {finderMatchLabel}</p>
+                      )}
+                      <div className="flex justify-center mb-4">
+                        <div className="relative w-[120px] h-[120px]">
+                          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 140 140">
+                            <circle cx="70" cy="70" r="54" stroke="#1F2937" strokeWidth="10" fill="none" />
+                            <circle
+                              cx="70" cy="70" r="54"
+                              stroke={sc.stroke}
+                              strokeWidth="10" fill="none" strokeLinecap="round"
+                              strokeDasharray="339.3"
+                              strokeDashoffset={339.3 - (fSite.overallScore / 100) * 339.3}
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-[24px] font-bold text-white leading-none">{fSite.overallScore}</span>
+                            <span className={`text-[11px] font-medium ${sc.text} mt-1`}>{fSite.rating}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-[#6B7280] text-center px-1 mb-4">
+                        {fSite.overallScore >= 80
+                          ? 'Strong match. This site closely fits your power, cooling, and timeline requirements.'
+                          : fSite.overallScore >= 60
+                          ? 'Good match. Minor trade-offs on one or more criteria.'
+                          : 'Partial match. Review power capacity and cooling compatibility.'}
+                      </p>
+                      <div className="space-y-2.5 mt-auto">
+                        {[
+                          { label: 'Power Fit', score: Math.min(100, Math.round(((fSite as any).power?.summary?.availableCapacityMW ?? 150) / Math.max(parseFloat(finderPower) || 1, 1) * 50)) },
+                          { label: 'Cooling Fit', score: fSite.overallScore },
+                          { label: 'Timeline Outlook', score: (fSite as any).forecastDetail?.scoreProjection?.slice(-1)[0]?.score ?? fSite.overallScore },
+                          { label: 'Site Quality', score: allSites.find(s => s.id === fSite.id)?.overallScore ?? fSite.overallScore },
+                        ].map((m, i) => {
+                          const mc = getScoreColors(Math.min(100, m.score));
+                          return (
+                            <div key={i}>
+                              <div className="flex justify-between items-center mb-0.5">
+                                <span className="text-[11px] text-[#9CA3AF]">{m.label}</span>
+                                <span className={`text-[11px] font-bold ${mc.text}`}>{Math.min(100, m.score)}</span>
+                              </div>
+                              <div className="w-full h-1.5 bg-[#1F2937] rounded-full overflow-hidden">
+                                <div className="h-full rounded-full" style={{ width: `${Math.min(100, m.score)}%`, backgroundColor: mc.stroke }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+            )}
+
+            {/* Site Detail card — Site Finder only */}
+            {activePage === 'site-finder' && finderHasRun && !finderLoading && finderResults.length > 0 && (() => {
+              const fSite = finderResults.find(s => s.id === selectedSiteId) ?? finderResults[0];
+              if (!fSite) return null;
+              // Show the real (unscored) site data in the detail card, with the match score as overallScore
+              const realSite = allSites.find(s => s.id === fSite.id);
+              const displaySite = realSite ? { ...realSite, overallScore: fSite.overallScore, rating: fSite.rating } : fSite;
+              return (
+                <div className="px-6 pb-6">
+                  <SiteDetail
+                    site={displaySite}
+                    onNavigateToChat={(prefill) => { setChatPreFill(prefill); setActivePage('ai-chat'); }}
+                    compareIds={compareIds}
+                    onToggleCompare={handleToggleCompare}
+                  />
+                </div>
+              );
+            })()}
 
             {/* Three-column row — Dashboard only */}
             {activePage === 'dashboard' && (

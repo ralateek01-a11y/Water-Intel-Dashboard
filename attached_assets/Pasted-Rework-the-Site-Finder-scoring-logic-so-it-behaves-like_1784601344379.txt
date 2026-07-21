@@ -1,0 +1,49 @@
+Rework the Site Finder scoring logic so it behaves like a real closest-match
+retriever against the site data in src/data/sites.js, rather than a light
+cosmetic filter. When the user submits the "Tell us about your project"
+form (Region, Power Requirement in MW, Cooling Technology, Timeline,
+Budget optional), compute a match score for every site as follows:
+
+1. REGION: if the user selects a specific region (not "All Regions"), only
+   include sites in that region. If "All Regions," include all sites but
+   still allow region to slightly influence scoring (e.g. no penalty).
+
+2. POWER REQUIREMENT: compare the user's requested MW against each site's
+   power.summary.availableCapacityMW. Sites with capacity comfortably above
+   the requirement score higher; sites where capacity is close to or below
+   the requirement score lower or get excluded if capacity is insufficient
+   (e.g. exclude if availableCapacityMW is less than the requested MW,
+   since the site genuinely couldn't support the project).
+
+3. COOLING TECHNOLOGY: compare the user's selected cooling technology
+   against each site's coolingDetail (or coolingImpact) data — sites whose
+   water/energy profile is well-suited to that specific cooling technology
+   (e.g. a site with low water availability should score lower for "Air
+   Cooling," which needs more water, and higher for "Immersion Cooling")
+   should be boosted or penalized accordingly, using the real
+   water-intensity differences between cooling types you already modeled
+   in Phase 16.
+
+4. TIMELINE: compare the user's target year against each site's
+   forecastDetail.scoreProjection (if available) — a site whose forecasted
+   score by that year is strong should rank higher than one that's only
+   good today but flat or declining by the target year.
+
+5. BUDGET (if provided): compare against each site's land.summary.landPrice
+   and any other cost-relevant fields (electricity price, water cost) —
+   sites whose estimated costs fit within budget score higher; sites likely
+   to exceed budget score lower (you can build a simple total cost estimate
+   from available price fields, it doesn't need to be a precise financial
+   model).
+
+Combine these into a single weighted overall match score per site (0-100),
+re-sort the Top Ranked Sites list by this computed score (not the site's
+static overallScore), and update the Site Suitability Score panel to
+reflect this computed match score for the top result, not just its generic
+pre-set score. Make sure the map markers and Site Detail card also reflect
+this same computed ranking.
+
+Show a brief explanation somewhere near the results (a small subtitle like
+"Ranked by match to your 120 MW, Immersion Cooling requirement in Riyadh")
+so it's clear to the user that this is a real computed match, not a fixed
+list.
