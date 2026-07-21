@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import {
   Droplet,
   Zap,
@@ -2097,6 +2098,46 @@ function ReportDetailRows({ rows }: { rows: { label: string; value: React.ReactN
 }
 
 /* ─── Full Report Modal ────────────────────────────────────── */
+/* ── narrative helper ───────────────────────────────────────── */
+function generateReportNarrative(site: Site): string {
+  const w  = site.water;
+  const pw = site.power;
+  const cl = site.climate;
+  const co = site.connectivity;
+  const la = site.land;
+  const z  = site.zoning;
+
+  const dims: { name: string; score: number }[] = [];
+  if (w)  dims.push({ name: 'water access',         score: w.summary.availabilityScore });
+  if (pw) dims.push({ name: 'power capacity',        score: pw.summary.availableCapacityMW >= 100 ? 85 : pw.summary.availableCapacityMW >= 50 ? 70 : 50 });
+  if (cl) {
+    const pue = parseFloat(cl.summary.estimatedPUEImpact);
+    dims.push({ name: 'climate conditions',          score: isNaN(pue) ? 65 : pue <= 1.2 ? 85 : pue <= 1.4 ? 70 : pue <= 1.6 ? 55 : 40 });
+  }
+  if (co) dims.push({ name: 'connectivity',          score: co.summary.fiberProviders >= 2 ? 85 : co.summary.fiberProviders === 1 ? 65 : 40 });
+  if (la) dims.push({ name: 'land & topography',     score: la.summary.floodRisk === 'Low' ? 85 : la.summary.floodRisk === 'High' ? 40 : 65 });
+  if (z)  dims.push({ name: 'regulatory environment', score: z.summary.dataCenterPermitted === 'Yes' ? (z.detail.easeOfPermits === 'Easy' ? 85 : 70) : 50 });
+
+  if (dims.length === 0) return `${site.name} is a candidate site under evaluation. Detailed dimension data is still being collected.`;
+
+  const sorted  = [...dims].sort((a, b) => b.score - a.score);
+  const top2    = sorted.slice(0, 2).map(d => d.name);
+  const bottom  = sorted[sorted.length - 1];
+  const strengthStr = top2.length >= 2 ? `${top2[0]} and ${top2[1]}` : top2[0];
+  const overallWord = site.overallScore >= 85 ? 'exceptional' : site.overallScore >= 75 ? 'strong' : site.overallScore >= 60 ? 'solid' : 'moderate';
+
+  let caveat = '';
+  if (bottom.score < 60)      caveat = ` However, ${bottom.name} presents the most notable constraint and warrants further due diligence.`;
+  else if (bottom.score < 75) caveat = ` ${bottom.name.charAt(0).toUpperCase() + bottom.name.slice(1)} is rated moderate and may benefit from targeted mitigation planning.`;
+  else                         caveat = ` All evaluated dimensions meet or exceed baseline requirements for large-scale data center deployment.`;
+
+  const sezNote = z?.summary.sezStatus && !['N/A', 'None', 'No', ''].includes(z.summary.sezStatus)
+    ? ` The site also benefits from ${z.summary.sezStatus} status, potentially reducing development timeline and fiscal burden.`
+    : '';
+
+  return `${site.name} achieves an ${overallWord} overall score of ${site.overallScore}/100, with particular strength in ${strengthStr}.${caveat}${sezNote}`;
+}
+
 function FullReportModal({ site, onClose }: { site: Site; onClose: () => void }) {
   const sc = scoreColors(site.overallScore);
   const w = site.water;
@@ -2118,13 +2159,13 @@ function FullReportModal({ site, onClose }: { site: Site; onClose: () => void })
   const easeColor = (v: string) =>
     v === 'Easy' ? 'text-[#10B981]' : v === 'Difficult' ? 'text-red-400' : 'text-amber-400';
 
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center">
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* backdrop */}
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
-      {/* modal */}
-      <div className="relative z-10 w-full max-w-[880px] mx-4 max-h-[92vh] flex flex-col bg-[#0B1220] border border-[#1F2937] rounded-2xl shadow-2xl overflow-hidden">
+      {/* modal — solid background so nothing bleeds through */}
+      <div className="relative z-10 w-full max-w-[880px] mx-4 max-h-[92vh] flex flex-col bg-[#0B1220] border border-[#1F2937] rounded-2xl shadow-2xl overflow-hidden" style={{ isolation: 'isolate' }}>
 
         {/* ── Header ── */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#1F2937] bg-[#0D1424] flex-shrink-0">
@@ -2178,7 +2219,7 @@ function FullReportModal({ site, onClose }: { site: Site; onClose: () => void })
           {/* ── Executive Summary ── */}
           <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-5">
             <p className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-widest mb-4">Executive Summary</p>
-            <div className="flex items-center gap-6">
+            <div className="flex items-start gap-6 mb-4">
               <div className="flex flex-col items-center gap-1 flex-shrink-0">
                 <CircleGauge score={site.overallScore} size={96} />
                 <span className={`text-[12px] font-semibold ${sc.text}`}>Overall Score</span>
@@ -2222,6 +2263,10 @@ function FullReportModal({ site, onClose }: { site: Site; onClose: () => void })
                 )}
               </div>
             </div>
+            {/* AI-style narrative */}
+            <p className="text-[13.5px] leading-relaxed text-[#9CA3AF] border-t border-[#1F2937] pt-4">
+              {generateReportNarrative(site)}
+            </p>
           </div>
 
           {/* ── Water ── */}
@@ -2344,6 +2389,36 @@ function FullReportModal({ site, onClose }: { site: Site; onClose: () => void })
             </ReportSection>
           )}
 
+          {/* ── Site Location map ── */}
+          {site.coordinates && (
+            <ReportSection title="Site Location" icon={MapPin} iconColor="text-[#10B981]">
+              <div className="rounded-lg overflow-hidden border border-[#1F2937]" style={{ height: 220, zIndex: 0 }}>
+                <MapContainer
+                  center={[site.coordinates.lat, site.coordinates.lng]}
+                  zoom={8}
+                  style={{ width: '100%', height: '100%' }}
+                  zoomControl={false}
+                  attributionControl={false}
+                  dragging={false}
+                  scrollWheelZoom={false}
+                  doubleClickZoom={false}
+                  touchZoom={false}
+                >
+                  <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+                  <CircleMarker
+                    center={[site.coordinates.lat, site.coordinates.lng]}
+                    radius={10}
+                    pathOptions={{ color: '#10B981', fillColor: '#10B981', fillOpacity: 0.9, weight: 2 }}
+                  >
+                    <Tooltip permanent direction="top" offset={[0, -12]} className="leaflet-report-tooltip">
+                      <span style={{ fontSize: 11, fontWeight: 600 }}>{site.name}</span>
+                    </Tooltip>
+                  </CircleMarker>
+                </MapContainer>
+              </div>
+            </ReportSection>
+          )}
+
           {/* ── Nearby Infrastructure table ── */}
           {(site.nearbyInfrastructure ?? []).length > 0 && (
             <ReportSection title="Nearby Infrastructure" icon={Building2} iconColor="text-[#9CA3AF]">
@@ -2379,7 +2454,8 @@ function FullReportModal({ site, onClose }: { site: Site; onClose: () => void })
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

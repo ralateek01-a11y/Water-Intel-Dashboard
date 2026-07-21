@@ -1,0 +1,54 @@
+The "View Full Report" modal has two bugs to fix:
+
+1. Z-INDEX / LAYERING BUG: the Leaflet map from the page behind the modal
+   is rendering on top of parts of the modal content instead of staying
+   behind it. Fix this by:
+   - Giving the modal's overlay/backdrop and content container a
+     significantly higher z-index than the map (Leaflet map panes often
+     default to high z-index values themselves, so the modal likely needs
+     to be in the range of 9999+ to reliably sit above it)
+   - Making sure the modal is rendered via a React portal (createPortal)
+     attached near the root of the document, not nested inside the same
+     DOM tree as the map component, so stacking context issues between the
+     map's internal layers and the modal can't happen
+   - Adding a solid (non-transparent) background to the modal's content
+     container so nothing behind it can show through even if a stacking
+     issue slips through in the future
+
+2. INCOMPLETE REPORT CONTENT: the report currently only shows an Executive
+   Summary with Water Access and Power Capacity. Rebuild it to be a
+   genuinely complete site intelligence report, specific to whichever site
+   was selected, covering ALL SIX dimensions from that site's data
+   (site.water, site.power, site.climate, site.connectivity, site.land,
+   site.zoning):
+
+   Structure the report as:
+   - Header (keep as-is): report title, site name, overall score/rating
+     badge, region + distance from Riyadh, generated date, Print/Close
+     buttons
+   - Executive Summary: overall score gauge, plus a short AI-style
+     narrative paragraph (2-3 sentences) summarizing the site's strongest
+     and weakest dimensions specifically (e.g. "This site scores
+     exceptionally well on water access and power capacity, but faces
+     moderate permitting complexity...")
+   - A dedicated section for EACH of the six dimensions (Water, Power,
+     Climate, Connectivity, Land, Zoning), each showing that dimension's
+     full summary + detail fields from the site's data — laid out as
+     clean labeled rows or small tables, with a section header and icon
+     matching the style already used in the six dimension tabs
+   - A small embedded map showing just this site's location (reuse the
+     zoomed-in single-site map pattern from the Water Access tab if you
+     built one in Phase 13, rather than the full interactive multi-layer
+     map — the report should show a simple static-feeling location
+     reference, not a fully interactive filterable map with its own
+     z-index concerns)
+   - Footer (keep as-is): platform name, "Confidential" notice
+
+   Make sure every field shown is pulled from the ACTUAL selected site's
+   data — if the user opens the report for a different site, every number
+   and section should update accordingly, not show placeholder or
+   previously-viewed data.
+
+Test by opening the report for at least two different sites with visibly
+different scores and confirming both the data and the layering render
+correctly for each.
