@@ -1,24 +1,53 @@
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap, CircleMarker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { sites, getSiteById } from '../data/sites.js';
 
 const LAYERS = [
-  { id: 'water-plants', label: 'Water Plants' },
-  { id: 'pipelines', label: 'Pipelines' },
-  { id: 'industrial', label: 'Industrial Cities' },
-  { id: 'data-centers', label: 'Data Centers' },
+  { id: 'water-plants',  label: 'Water Plants'      },
+  { id: 'pipelines',     label: 'Pipelines'          },
+  { id: 'industrial',    label: 'Industrial Cities'  },
+  { id: 'data-centers',  label: 'Data Centers'       },
 ];
 
 const LEGEND_ITEMS = [
   { color: '#3B82F6', label: 'Wastewater Treatment Plant' },
-  { color: '#06B6D4', label: 'Desalination Plant' },
-  { color: '#8B5CF6', label: 'TSE Pipeline' },
-  { color: '#F59E0B', label: 'Industrial City' },
-  { color: '#10B981', label: 'Data Center (Existing)' },
-  { color: '#6EE7B7', label: 'Data Center (Planned)' },
+  { color: '#06B6D4', label: 'Desalination Plant'         },
+  { color: '#8B5CF6', label: 'TSE Pipeline'               },
+  { color: '#F59E0B', label: 'Industrial City'            },
+  { color: '#10B981', label: 'Data Center (Existing)'     },
+  { color: '#6EE7B7', label: 'Data Center (Planned)'      },
 ];
+
+// ── Static overlay data ───────────────────────────────────────────────────────
+
+const WATER_PLANTS = [
+  { id: 'wp-1', name: 'Riyadh Water Treatment Plant',       type: 'Treatment',    lat: 24.61, lng: 46.72 },
+  { id: 'wp-2', name: 'Jeddah Desalination Complex',        type: 'Desalination', lat: 21.49, lng: 39.19 },
+  { id: 'wp-3', name: 'Jubail Seawater Desalination Plant', type: 'Desalination', lat: 27.00, lng: 49.65 },
+  { id: 'wp-4', name: 'Yanbu Desalination Plant',           type: 'Desalination', lat: 24.09, lng: 38.05 },
+  { id: 'wp-5', name: 'Dammam Treatment Plant',             type: 'Treatment',    lat: 26.43, lng: 50.10 },
+  { id: 'wp-6', name: 'Al-Qatif Desalination Plant',        type: 'Desalination', lat: 26.52, lng: 50.01 },
+];
+
+const PIPELINES = [
+  { id: 'pl-1', name: 'Riyadh TSE Pipeline Node',         lat: 24.90, lng: 46.80 },
+  { id: 'pl-2', name: 'Eastern Province Pipeline Hub',    lat: 26.50, lng: 49.90 },
+  { id: 'pl-3', name: 'Sudair Pipeline Junction',         lat: 25.62, lng: 45.90 },
+  { id: 'pl-4', name: 'Qassim Water Distribution Node',  lat: 26.20, lng: 43.50 },
+  { id: 'pl-5', name: 'NEOM Pipeline Terminus',           lat: 28.00, lng: 35.50 },
+];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Categorise a site into the map layer it belongs to based on its name. */
+function getSiteLayer(name: string): 'industrial' | 'data-centers' {
+  const lower = name.toLowerCase();
+  if (lower.includes('industrial') || lower.includes('wadi') || lower.includes('jubail')) {
+    return 'industrial';
+  }
+  return 'data-centers';
+}
 
 function scoreColor(score: number) {
   if (score >= 80) return { fg: '#10B981', bg: 'rgba(16,185,129,0.18)', ring: '#10B98140' };
@@ -54,24 +83,42 @@ function createMarkerIcon(score: number, selected: boolean) {
   });
 }
 
-// Pan map when selected site changes (without jarring zoom reset)
-function MapViewController({ siteId }: { siteId: string }) {
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type SiteEntry = {
+  id: string;
+  name: string;
+  region: string;
+  overallScore: number;
+  rating: string;
+  coordinates: { lat: number; lng: number };
+  waterAccess: { source: string };
+};
+
+// ── Map controller ────────────────────────────────────────────────────────────
+
+function MapViewController({ siteId, sites }: { siteId: string; sites: SiteEntry[] }) {
   const map = useMap();
   useEffect(() => {
-    const site = getSiteById(siteId);
+    const site = sites.find(s => s.id === siteId);
     if (site) {
       map.panTo([site.coordinates.lat, site.coordinates.lng], { animate: true, duration: 0.5 });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [siteId, map]);
   return null;
 }
 
+// ── Component ─────────────────────────────────────────────────────────────────
+
 interface SiteMapProps {
   selectedSiteId: string;
   onSiteSelect: (id: string) => void;
+  /** All sites to render as score markers (already filtered by parent if needed). */
+  sitesToDisplay: SiteEntry[];
 }
 
-export function SiteMap({ selectedSiteId, onSiteSelect }: SiteMapProps) {
+export function SiteMap({ selectedSiteId, onSiteSelect, sitesToDisplay }: SiteMapProps) {
   const [activeLayers, setActiveLayers] = useState<Set<string>>(
     new Set(['industrial', 'data-centers'])
   );
@@ -83,6 +130,10 @@ export function SiteMap({ selectedSiteId, onSiteSelect }: SiteMapProps) {
       return next;
     });
   };
+
+  // Separate sites into their layers so each can be toggled independently
+  const industrialSites  = sitesToDisplay.filter(s => getSiteLayer(s.name) === 'industrial');
+  const dataCenterSites  = sitesToDisplay.filter(s => getSiteLayer(s.name) === 'data-centers');
 
   return (
     <div className="relative h-full w-full rounded-xl overflow-hidden border border-[#1F2937]">
@@ -97,13 +148,11 @@ export function SiteMap({ selectedSiteId, onSiteSelect }: SiteMapProps) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           maxZoom={19}
         />
-
-        {/* Zoom control top-right (default leaflet, repositioned) */}
         <ZoomControl position="topright" />
+        <MapViewController siteId={selectedSiteId} sites={sitesToDisplay} />
 
-        <MapViewController siteId={selectedSiteId} />
-
-        {sites.map(site => (
+        {/* ── Industrial city site markers ── */}
+        {activeLayers.has('industrial') && industrialSites.map(site => (
           <Marker
             key={site.id}
             position={[site.coordinates.lat, site.coordinates.lng]}
@@ -118,24 +167,80 @@ export function SiteMap({ selectedSiteId, onSiteSelect }: SiteMapProps) {
                 minWidth: '170px', fontSize: '12px',
                 border: '1px solid #1F2937',
               }}>
-                <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '3px' }}>
-                  {site.name}
-                </div>
+                <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '3px' }}>{site.name}</div>
                 <div style={{ color: '#9CA3AF', marginBottom: '6px' }}>{site.region}</div>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  <span style={{
-                    color: scoreColor(site.overallScore).fg,
-                    fontWeight: 700, fontSize: '13px',
-                  }}>{site.overallScore}</span>
+                  <span style={{ color: scoreColor(site.overallScore).fg, fontWeight: 700, fontSize: '13px' }}>{site.overallScore}</span>
                   <span style={{ color: '#6B7280' }}>·</span>
                   <span style={{ color: scoreColor(site.overallScore).fg }}>{site.rating}</span>
                 </div>
-                <div style={{ marginTop: '6px', color: '#9CA3AF', fontSize: '11px' }}>
-                  {site.waterAccess.source}
-                </div>
+                <div style={{ marginTop: '6px', color: '#9CA3AF', fontSize: '11px' }}>{site.waterAccess.source}</div>
               </div>
             </Popup>
           </Marker>
+        ))}
+
+        {/* ── Data center site markers ── */}
+        {activeLayers.has('data-centers') && dataCenterSites.map(site => (
+          <Marker
+            key={site.id}
+            position={[site.coordinates.lat, site.coordinates.lng]}
+            icon={createMarkerIcon(site.overallScore, site.id === selectedSiteId)}
+            eventHandlers={{ click: () => onSiteSelect(site.id) }}
+            zIndexOffset={site.id === selectedSiteId ? 1000 : 0}
+          >
+            <Popup className="wi-popup">
+              <div style={{
+                background: '#111827', color: '#F9FAFB',
+                padding: '10px 12px', borderRadius: '8px',
+                minWidth: '170px', fontSize: '12px',
+                border: '1px solid #1F2937',
+              }}>
+                <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '3px' }}>{site.name}</div>
+                <div style={{ color: '#9CA3AF', marginBottom: '6px' }}>{site.region}</div>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <span style={{ color: scoreColor(site.overallScore).fg, fontWeight: 700, fontSize: '13px' }}>{site.overallScore}</span>
+                  <span style={{ color: '#6B7280' }}>·</span>
+                  <span style={{ color: scoreColor(site.overallScore).fg }}>{site.rating}</span>
+                </div>
+                <div style={{ marginTop: '6px', color: '#9CA3AF', fontSize: '11px' }}>{site.waterAccess.source}</div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+
+        {/* ── Water plant overlay markers ── */}
+        {activeLayers.has('water-plants') && WATER_PLANTS.map(wp => (
+          <CircleMarker
+            key={wp.id}
+            center={[wp.lat, wp.lng]}
+            radius={7}
+            pathOptions={{
+              color:       wp.type === 'Desalination' ? '#22D3EE' : '#3B82F6',
+              fillColor:   wp.type === 'Desalination' ? '#22D3EE' : '#3B82F6',
+              fillOpacity: 0.8,
+              weight:      1.5,
+            }}
+          >
+            <Tooltip direction="top" offset={[0, -8]}>
+              <span style={{ fontSize: 11, fontWeight: 600 }}>{wp.name}</span><br />
+              <span style={{ fontSize: 10, color: '#9CA3AF' }}>{wp.type}</span>
+            </Tooltip>
+          </CircleMarker>
+        ))}
+
+        {/* ── Pipeline overlay markers ── */}
+        {activeLayers.has('pipelines') && PIPELINES.map(pl => (
+          <CircleMarker
+            key={pl.id}
+            center={[pl.lat, pl.lng]}
+            radius={5}
+            pathOptions={{ color: '#A78BFA', fillColor: '#8B5CF6', fillOpacity: 0.75, weight: 1.5 }}
+          >
+            <Tooltip direction="top" offset={[0, -8]}>
+              <span style={{ fontSize: 11 }}>{pl.name}</span>
+            </Tooltip>
+          </CircleMarker>
         ))}
       </MapContainer>
 
@@ -164,7 +269,7 @@ export function SiteMap({ selectedSiteId, onSiteSelect }: SiteMapProps) {
         })}
       </div>
 
-      {/* Locate-me button — sits just below the zoom control */}
+      {/* Locate-me button */}
       <div className="absolute z-[1000]" style={{ top: 82, right: 10 }}>
         <button
           title="Center on Riyadh"
@@ -172,9 +277,8 @@ export function SiteMap({ selectedSiteId, onSiteSelect }: SiteMapProps) {
           className="w-[30px] h-[30px] bg-[#111827] hover:bg-[#1F2937]
                      border border-[#374151] rounded flex items-center justify-center
                      text-[#9CA3AF] hover:text-white transition-colors shadow-md"
-          onClick={() => {/* Placeholder — real geolocation can be wired later */}}
+          onClick={() => {/* Placeholder */}}
         >
-          {/* Crosshair / locate icon */}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3" />
@@ -189,25 +293,18 @@ export function SiteMap({ selectedSiteId, onSiteSelect }: SiteMapProps) {
                    bg-[#0B1220]/92 backdrop-blur-sm border border-[#1F2937] rounded-lg p-3"
         data-testid="map-legend"
       >
-        <div className="text-[9px] font-semibold text-[#6B7280] uppercase tracking-widest mb-2">
-          Legend
-        </div>
+        <div className="text-[9px] font-semibold text-[#6B7280] uppercase tracking-widest mb-2">Legend</div>
         <div className="space-y-1.5">
           {LEGEND_ITEMS.map(item => (
             <div key={item.label} className="flex items-center gap-2">
-              <div
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: item.color }}
-              />
-              <span className="text-[10px] text-[#D1D5DB] whitespace-nowrap leading-none">
-                {item.label}
-              </span>
+              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+              <span className="text-[10px] text-[#D1D5DB] whitespace-nowrap leading-none">{item.label}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Popup style overrides — scoped to this map */}
+      {/* Popup / zoom style overrides */}
       <style>{`
         .leaflet-popup-content-wrapper,
         .leaflet-popup-tip {
@@ -215,9 +312,7 @@ export function SiteMap({ selectedSiteId, onSiteSelect }: SiteMapProps) {
           box-shadow: none !important;
           padding: 0 !important;
         }
-        .leaflet-popup-content {
-          margin: 0 !important;
-        }
+        .leaflet-popup-content { margin: 0 !important; }
         .leaflet-control-zoom a {
           background: #111827 !important;
           border-color: #374151 !important;

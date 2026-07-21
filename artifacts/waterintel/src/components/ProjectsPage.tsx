@@ -56,8 +56,13 @@ const COOLING_OPTIONS = [
 ];
 const REGION_OPTIONS = ['Riyadh', 'Eastern', 'Qassim', 'Makkah', 'Madinah', 'NEOM'];
 
-export function ProjectsPage({ projects, onAddProject, onSelectProject }: ProjectsPageProps) {
-  const [showModal, setShowModal] = useState(false);
+// ── Shared modal — exported so Dashboard can reuse it ────────────────────────
+interface NewProjectModalProps {
+  onAdd: (p: Project) => void;
+  onClose: () => void;
+}
+
+export function NewProjectModal({ onAdd, onClose }: NewProjectModalProps) {
   const [form, setForm] = useState({
     name: '',
     powerMW: '',
@@ -66,6 +71,7 @@ export function ProjectsPage({ projects, onAddProject, onSelectProject }: Projec
     targetYear: '2027',
   });
   const [formError, setFormError] = useState('');
+  const [success, setSuccess] = useState(false);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -87,11 +93,106 @@ export function ProjectsPage({ projects, onAddProject, onSelectProject }: Projec
       documents: [],
       aiRecommendations: [],
     };
-    onAddProject(newProject);
-    setShowModal(false);
-    setForm({ name: '', powerMW: '', coolingTechnology: COOLING_OPTIONS[0], region: REGION_OPTIONS[0], targetYear: '2027' });
-    setFormError('');
+    onAdd(newProject);
+    setSuccess(true);
+    setTimeout(() => { onClose(); }, 1200);
   }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-[480px] bg-[#111827] border border-[#1F2937] rounded-2xl p-6 shadow-2xl">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-white font-bold text-[16px]">New Project</h2>
+          <button onClick={onClose} className="text-[#6B7280] hover:text-white transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {success ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-3">
+            <CheckCircle2 className="w-10 h-10 text-[#10B981]" />
+            <p className="text-white font-semibold">Project created!</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-1.5">Project Name</label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="e.g. Riyadh AI Hyperscale Campus"
+                className="w-full h-9 bg-[#0A0E17] border border-[#1F2937] focus:border-[#10B981] rounded-md px-3 text-[13px] text-white placeholder-[#4B5563] focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-1.5">Power Requirement (MW)</label>
+                <input
+                  type="number" min="1"
+                  value={form.powerMW}
+                  onChange={(e) => setForm({ ...form, powerMW: e.target.value })}
+                  placeholder="e.g. 150"
+                  className="w-full h-9 bg-[#0A0E17] border border-[#1F2937] focus:border-[#10B981] rounded-md px-3 text-[13px] text-white placeholder-[#4B5563] focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-1.5">Target Year</label>
+                <input
+                  type="number" min="2025" max="2040"
+                  value={form.targetYear}
+                  onChange={(e) => setForm({ ...form, targetYear: e.target.value })}
+                  className="w-full h-9 bg-[#0A0E17] border border-[#1F2937] focus:border-[#10B981] rounded-md px-3 text-[13px] text-white focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-1.5">Cooling Technology</label>
+              <select
+                value={form.coolingTechnology}
+                onChange={(e) => setForm({ ...form, coolingTechnology: e.target.value })}
+                className="w-full h-9 bg-[#0A0E17] border border-[#1F2937] focus:border-[#10B981] rounded-md px-3 text-[13px] text-white focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+              >
+                {COOLING_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-1.5">Region</label>
+              <select
+                value={form.region}
+                onChange={(e) => setForm({ ...form, region: e.target.value })}
+                className="w-full h-9 bg-[#0A0E17] border border-[#1F2937] focus:border-[#10B981] rounded-md px-3 text-[13px] text-white focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+              >
+                {REGION_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
+            {formError && <p className="text-red-400 text-[12px]">{formError}</p>}
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button" onClick={onClose}
+                className="flex-1 border border-[#1F2937] text-[#9CA3AF] hover:text-white hover:border-[#374151] rounded-md py-2 text-sm transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="flex-1 bg-[#10B981] hover:bg-[#059669] text-white rounded-md py-2 text-sm font-semibold transition-colors"
+              >
+                Create Project
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── ProjectsPage ──────────────────────────────────────────────────────────────
+
+export function ProjectsPage({ projects, onAddProject, onSelectProject }: ProjectsPageProps) {
+  const [showModal, setShowModal] = useState(false);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -186,119 +287,9 @@ export function ProjectsPage({ projects, onAddProject, onSelectProject }: Projec
         )}
       </div>
 
-      {/* New Project Modal */}
+      {/* New Project Modal — delegates to the shared exported component */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-          <div className="relative w-full max-w-[480px] bg-[#111827] border border-[#1F2937] rounded-2xl p-6 shadow-2xl">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-white font-bold text-[16px]">New Project</h2>
-              <button onClick={() => setShowModal(false)} className="text-[#6B7280] hover:text-white transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Project Name */}
-              <div>
-                <label className="block text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-1.5">
-                  Project Name
-                </label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g. Riyadh AI Hyperscale Campus"
-                  className="w-full h-9 bg-[#0A0E17] border border-[#1F2937] focus:border-[#10B981] rounded-md px-3 text-[13px] text-white placeholder-[#4B5563] focus:outline-none focus:ring-1 focus:ring-[#10B981]"
-                />
-              </div>
-
-              {/* Power + Year */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-1.5">
-                    Power Requirement (MW)
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={form.powerMW}
-                    onChange={(e) => setForm({ ...form, powerMW: e.target.value })}
-                    placeholder="e.g. 150"
-                    className="w-full h-9 bg-[#0A0E17] border border-[#1F2937] focus:border-[#10B981] rounded-md px-3 text-[13px] text-white placeholder-[#4B5563] focus:outline-none focus:ring-1 focus:ring-[#10B981]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-1.5">
-                    Target Year
-                  </label>
-                  <input
-                    type="number"
-                    min="2025"
-                    max="2040"
-                    value={form.targetYear}
-                    onChange={(e) => setForm({ ...form, targetYear: e.target.value })}
-                    className="w-full h-9 bg-[#0A0E17] border border-[#1F2937] focus:border-[#10B981] rounded-md px-3 text-[13px] text-white focus:outline-none focus:ring-1 focus:ring-[#10B981]"
-                  />
-                </div>
-              </div>
-
-              {/* Cooling Technology */}
-              <div>
-                <label className="block text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-1.5">
-                  Cooling Technology
-                </label>
-                <select
-                  value={form.coolingTechnology}
-                  onChange={(e) => setForm({ ...form, coolingTechnology: e.target.value })}
-                  className="w-full h-9 bg-[#0A0E17] border border-[#1F2937] focus:border-[#10B981] rounded-md px-3 text-[13px] text-white focus:outline-none focus:ring-1 focus:ring-[#10B981]"
-                >
-                  {COOLING_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Region */}
-              <div>
-                <label className="block text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-1.5">
-                  Region
-                </label>
-                <select
-                  value={form.region}
-                  onChange={(e) => setForm({ ...form, region: e.target.value })}
-                  className="w-full h-9 bg-[#0A0E17] border border-[#1F2937] focus:border-[#10B981] rounded-md px-3 text-[13px] text-white focus:outline-none focus:ring-1 focus:ring-[#10B981]"
-                >
-                  {REGION_OPTIONS.map((r) => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
-              </div>
-
-              {formError && (
-                <p className="text-red-400 text-[12px]">{formError}</p>
-              )}
-
-              {/* Actions */}
-              <div className="flex gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 border border-[#1F2937] text-[#9CA3AF] hover:text-white hover:border-[#374151] rounded-md py-2 text-sm transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-[#10B981] hover:bg-[#059669] text-white rounded-md py-2 text-sm font-semibold transition-colors"
-                >
-                  Create Project
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <NewProjectModal onAdd={onAddProject} onClose={() => setShowModal(false)} />
       )}
     </div>
   );

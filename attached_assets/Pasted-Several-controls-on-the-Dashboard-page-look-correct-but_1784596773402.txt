@@ -1,0 +1,59 @@
+Several controls on the Dashboard page look correct but don't actually do
+anything when clicked. Fix each of these:
+
+1. MAP LAYER TOGGLES ("Water Plants", "Pipelines", "Industrial Cities",
+   "Data Centers" buttons above the map): these should each be a toggle
+   (pressed/active state visually indicated, like the existing style where
+   "Industrial Cities" and "Data Centers" appear highlighted). Clicking one
+   should show/hide that category of markers on the map. Add a boolean
+   state for each layer (e.g. showWaterPlants, showPipelines,
+   showIndustrialCities, showDataCenters), default them to match whatever
+   is currently visually active, and filter the markers rendered on the
+   map based on these booleans. If the underlying marker data doesn't
+   currently distinguish these categories, add a "category" or "type"
+   field to whatever mock data feeds the map markers so this filtering is
+   possible.
+
+2. "VIEW ALL SITES" link (below the Top Ranked Sites list): this should
+   expand the list to show all sites (currently showing only the top 4-5),
+   or navigate to a dedicated full list view — either is fine, but
+   something must visibly happen. If you expand in place, add a "Show
+   less" option to collapse back. Pull the full list from the same sites
+   data source already used for the top-ranked list.
+
+3. QUICK FILTERS panel (Region, Power Requirement, Cooling Technology
+   dropdowns on the right side): these are currently decorative. Wire them
+   to actual state, and make the "Apply Filters" button re-filter the Top
+   Ranked Sites list, the map markers, and the Site Suitability Score panel
+   based on the selected Region/Power/Cooling Technology — reuse the same
+   filtering/scoring logic already built for the Site Finder page's "Find
+   Sites" flow (from Phase 8), since this is functionally the same
+   operation just triggered from a different location on Dashboard.
+
+4. "NEW PROJECT" button: clicking this should open the same "New Project"
+   modal/form you built in Phase 7 for the Projects page (Project Name,
+   Power Requirement, Cooling Technology, Region, Target Year) — reuse that
+   exact modal component rather than building a second one. On submit, add
+   the new project to the same projects data/state used by the Projects
+   page, and show a brief success confirmation (e.g. a toast or inline
+   message) before closing the modal.
+
+5. "+ ADD CUSTOM SITE" button: clicking this should open a modal with a
+   form for manually adding a site: Site Name, Region, Coordinates (or a
+   simple lat/lng input, or let the user click a point on the map to set
+   this), and any of the six dimension summary fields you're comfortable
+   letting a user set manually (Water availability, Power capacity, etc —
+   these can default to reasonable placeholder values if the user leaves
+   them blank). On submit, add the new site to the same sites data/state
+   used everywhere else (Top Ranked Sites list, map, Site Detail card),
+   so it immediately appears alongside the existing mock sites.
+
+For all of the above: if a control needs to update data that's currently
+hardcoded in a mock file (like sites.js or projects.js), make sure it's
+using React state initialized FROM that mock data, not reading the file
+directly on every render — otherwise added/filtered items won't persist
+or update properly. State can reset on page refresh for now; we don't need
+backend persistence yet, just working in-session interactivity.
+
+After this fix, every clickable control currently on the Dashboard page
+should visibly do something — no dead buttons or non-responsive toggles.

@@ -4,7 +4,7 @@ import { projects as initialProjects } from './data/projects.js';
 import { SiteMap } from './components/SiteMap';
 import { SiteDetail } from './components/SiteDetail';
 import { AIChatPage } from './components/AIChatPage';
-import { ProjectsPage, type Project } from './components/ProjectsPage';
+import { ProjectsPage, NewProjectModal, type Project } from './components/ProjectsPage';
 import { ProjectDetail } from './components/ProjectDetail';
 import { WaterInfrastructurePage } from './components/WaterInfrastructurePage';
 import { DataCentersPage } from './components/DataCentersPage';
@@ -24,7 +24,10 @@ import {
   Bot,
   Search,
   ChevronDown,
-  Bell
+  Bell,
+  Plus,
+  X,
+  CheckCircle2 as CheckCircle2Icon,
 } from 'lucide-react';
 
 type Page = 'dashboard' | 'site-finder' | 'ai-chat' | 'projects' | 'project-detail' | 'water-infrastructure' | 'data-centers' | 'documents';
@@ -34,7 +37,9 @@ function Shell() {
   const [activePage, setActivePage] = useState<Page>('dashboard');
   const [selectedSiteId, setSelectedSiteId] = useState(sortedSites[0]?.id);
   const [chatPreFill,    setChatPreFill]    = useState<string>('');
-  const selectedSite = getSiteById(selectedSiteId);
+  const [customSites,    setCustomSites]    = useState<any[]>([]);
+  const allSites = [...sortedSites, ...customSites];
+  const selectedSite = allSites.find(s => s.id === selectedSiteId) ?? null;
   const [regionFilter, setRegionFilter] = useState('All Regions');
   const [powerFilter, setPowerFilter] = useState('Any Capacity');
   const [coolingFilter, setCoolingFilter] = useState('All Technologies');
@@ -91,9 +96,86 @@ function Shell() {
     }, 800);
   }
 
-  // The list shown in the ranked panel.
-  // Dashboard always shows unfiltered default ranking; Site Finder shows filtered results after a run.
-  const displayedSites = (activePage === 'site-finder' && finderHasRun) ? finderResults : sortedSites;
+  // Dashboard Quick Filter state
+  const [dashboardFiltered, setDashboardFiltered] = useState(false);
+  const [dashFilteredSites, setDashFilteredSites] = useState<any[]>([]);
+  const displayedSites = dashboardFiltered ? dashFilteredSites : allSites;
+
+  function applyDashboardFilters() {
+    let pool = [...allSites];
+    if (regionFilter !== 'All Regions') {
+      pool = pool.filter(s => s.region === regionFilter || s.region.startsWith(regionFilter));
+    }
+    if (coolingFilter !== 'All Technologies') {
+      pool = pool
+        .map(s => ({
+          ...s,
+          overallScore: Math.min(100, Math.max(0, s.overallScore + coolingAdjustment(s, coolingFilter))),
+        }))
+        .sort((a, b) => b.overallScore - a.overallScore);
+    }
+    if (powerFilter !== 'Any Capacity') {
+      const ranges: Record<string, [number, number]> = {
+        '50–100 MW':  [50,  100],
+        '100–200 MW': [100, 200],
+        '200–500 MW': [200, 500],
+        '500 MW+':    [500, Infinity],
+      };
+      const r = ranges[powerFilter];
+      if (r) {
+        pool = pool.filter(s => {
+          const cap = s.power?.summary?.availableCapacityMW ?? 150;
+          return cap >= r[0] && cap <= r[1];
+        });
+      }
+    }
+    const sorted = pool.sort((a, b) => b.overallScore - a.overallScore);
+    setDashFilteredSites(sorted);
+    setDashboardFiltered(true);
+    if (sorted.length > 0) setSelectedSiteId(sorted[0].id);
+  }
+
+  // Dashboard UI state
+  const [showAllSites,        setShowAllSites]        = useState(false);
+  const [showNewProjectModal, setShowNewProjectModal] = useState(false);
+  const [showAddSiteModal,    setShowAddSiteModal]    = useState(false);
+  const [siteForm, setSiteForm] = useState({ name: '', region: 'Riyadh', lat: '24.7', lng: '46.7', waterScore: '60', powerMW: '100' });
+  const [siteFormError,   setSiteFormError]   = useState('');
+  const [siteFormSuccess, setSiteFormSuccess] = useState(false);
+
+  function handleAddCustomSite(e: React.FormEvent) {
+    e.preventDefault();
+    if (!siteForm.name.trim()) { setSiteFormError('Site name is required.'); return; }
+    const lat = parseFloat(siteForm.lat);
+    const lng = parseFloat(siteForm.lng);
+    if (isNaN(lat) || isNaN(lng)) { setSiteFormError('Enter valid coordinates.'); return; }
+    const waterScore = Math.min(100, Math.max(0, parseInt(siteForm.waterScore) || 60));
+    const powerMW    = parseInt(siteForm.powerMW) || 100;
+    const score      = Math.round((waterScore + 60 + 55) / 3);
+    const rating     = score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Moderate' : 'Poor';
+    const newSite = {
+      id: `custom-${Date.now()}`,
+      name: siteForm.name.trim(),
+      region: siteForm.region,
+      overallScore: score,
+      rating,
+      coordinates: { lat, lng },
+      waterAccess: { score: waterScore, nearestTSELine: 'N/A', source: 'Custom entry' },
+      infrastructure: { score: 60, powerAvailability: `${powerMW} MW available`, fiberConnectivity: 'N/A' },
+      regulatory: { score: 55, complexityLevel: 'Medium', estApprovalTime: '12–18 months', esgScore: 0 },
+      coolingImpact: { airCooling: '+1,200 m3/day', liquidCooling: '+800 m3/day', immersionCooling: '+400 m3/day', dlcCooling: '+600 m3/day' },
+      nearbyInfrastructure: [],
+    };
+    setCustomSites(prev => [...prev, newSite]);
+    setSiteFormSuccess(true);
+    setTimeout(() => {
+      setSiteFormSuccess(false);
+      setShowAddSiteModal(false);
+      setSiteForm({ name: '', region: 'Riyadh', lat: '24.7', lng: '46.7', waterScore: '60', powerMW: '100' });
+      setSiteFormError('');
+      setSelectedSiteId(newSite.id);
+    }, 1200);
+  }
 
   // Projects state
   const [projects, setProjects] = useState<Project[]>(initialProjects as Project[]);
@@ -335,16 +417,20 @@ function Shell() {
             </div>
             <div className="flex gap-3">
               <button
-                className="border border-[#1F2937] bg-transparent text-[#D1D5DB] hover:bg-[#1F2937]/50 rounded-md px-4 py-2 text-sm transition-colors"
+                onClick={() => setShowNewProjectModal(true)}
+                className="border border-[#1F2937] bg-transparent text-[#D1D5DB] hover:bg-[#1F2937]/50 rounded-md px-4 py-2 text-sm transition-colors flex items-center gap-1.5"
                 data-testid="button-new-project"
               >
+                <Plus className="w-3.5 h-3.5" />
                 New Project
               </button>
               <button
-                className="bg-[#10B981] text-white hover:bg-[#059669] rounded-md px-4 py-2 text-sm transition-colors"
+                onClick={() => setShowAddSiteModal(true)}
+                className="bg-[#10B981] text-white hover:bg-[#059669] rounded-md px-4 py-2 text-sm transition-colors flex items-center gap-1.5"
                 data-testid="button-add-custom-site"
               >
-                + Add Custom Site
+                <Plus className="w-3.5 h-3.5" />
+                Add Custom Site
               </button>
             </div>
           </div>
@@ -484,9 +570,10 @@ function Shell() {
                         <p className="text-[#6B7280] text-[12px]">No sites match your criteria.</p>
                       </div>
                     ) : (
-                      displayedSites.slice(0, 5).map((site, index) => {
+                      displayedSites.slice(0, showAllSites ? undefined : 5).map((site, index) => {
+                        const visibleCount = showAllSites ? displayedSites.length : Math.min(5, displayedSites.length);
                         const isSelected = site.id === selectedSiteId;
-                        const isLast = index === Math.min(4, displayedSites.length - 1);
+                        const isLast = index === visibleCount - 1;
                         const sc = getScoreColors(site.overallScore);
                         return (
                           <div
@@ -522,8 +609,12 @@ function Shell() {
                   </div>
 
                   {displayedSites.length > 0 && (
-                    <a className="text-[#10B981] text-xs hover:underline cursor-pointer mt-3 block text-right" data-testid="link-view-all">
-                      View all sites &rarr;
+                    <a
+                      onClick={() => setShowAllSites(v => !v)}
+                      className="text-[#10B981] text-xs hover:underline cursor-pointer mt-3 block text-right"
+                      data-testid="link-view-all"
+                    >
+                      {showAllSites ? 'Show less ↑' : `View all ${displayedSites.length} sites →`}
                     </a>
                   )}
                 </div>
@@ -531,7 +622,7 @@ function Shell() {
 
               {/* Center panel — Map */}
               <div className="flex-1 min-w-0">
-                <SiteMap selectedSiteId={selectedSiteId} onSiteSelect={setSelectedSiteId} />
+                <SiteMap selectedSiteId={selectedSiteId} onSiteSelect={setSelectedSiteId} sitesToDisplay={displayedSites} />
               </div>
 
               {/* Right panel — Score + Filters */}
@@ -645,11 +736,20 @@ function Shell() {
                       </select>
                     </div>
                     <button
+                      onClick={applyDashboardFilters}
                       className="w-full bg-[#10B981] hover:bg-[#059669] text-white text-sm font-medium py-2 rounded-md transition-colors"
                       data-testid="button-apply-filters"
                     >
                       Apply Filters
                     </button>
+                    {dashboardFiltered && (
+                      <button
+                        onClick={() => { setDashboardFiltered(false); setShowAllSites(false); }}
+                        className="w-full border border-[#1F2937] text-[#9CA3AF] hover:text-white text-sm py-1.5 rounded-md transition-colors"
+                      >
+                        Clear filter
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -673,6 +773,136 @@ function Shell() {
           </div>{/* end scrollable body */}
 
           </>}
+
+          {/* ── New Project modal (reused from ProjectsPage) ── */}
+          {showNewProjectModal && (
+            <NewProjectModal
+              onAdd={handleAddProject}
+              onClose={() => setShowNewProjectModal(false)}
+            />
+          )}
+
+          {/* ── Add Custom Site modal ── */}
+          {showAddSiteModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                onClick={() => { setShowAddSiteModal(false); setSiteFormError(''); setSiteFormSuccess(false); }}
+              />
+              <div className="relative w-full max-w-[520px] bg-[#111827] border border-[#1F2937] rounded-2xl p-6 shadow-2xl">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-white font-bold text-[16px]">Add Custom Site</h2>
+                  <button
+                    onClick={() => { setShowAddSiteModal(false); setSiteFormError(''); setSiteFormSuccess(false); }}
+                    className="text-[#6B7280] hover:text-white transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {siteFormSuccess ? (
+                  <div className="flex flex-col items-center justify-center py-8 gap-3">
+                    <CheckCircle2Icon className="w-10 h-10 text-[#10B981]" />
+                    <p className="text-white font-semibold">Site added!</p>
+                    <p className="text-[#6B7280] text-sm">It will appear in the list and on the map.</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleAddCustomSite} className="space-y-4">
+                    {/* Site name */}
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-1.5">Site Name</label>
+                      <input
+                        type="text"
+                        value={siteForm.name}
+                        onChange={e => setSiteForm({ ...siteForm, name: e.target.value })}
+                        placeholder="e.g. Tabuk Industrial Zone"
+                        className="w-full h-9 bg-[#0A0E17] border border-[#1F2937] focus:border-[#10B981] rounded-md px-3 text-[13px] text-white placeholder-[#4B5563] focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                      />
+                    </div>
+
+                    {/* Region */}
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-1.5">Region</label>
+                      <select
+                        value={siteForm.region}
+                        onChange={e => setSiteForm({ ...siteForm, region: e.target.value })}
+                        className="w-full h-9 bg-[#0A0E17] border border-[#1F2937] focus:border-[#10B981] rounded-md px-3 text-[13px] text-white focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                      >
+                        {['Riyadh', 'Eastern', 'Qassim', 'Makkah', 'Madinah', 'NEOM', 'Tabuk', 'Hail'].map(r => (
+                          <option key={r} value={r}>{r}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Coordinates */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-1.5">Latitude</label>
+                        <input
+                          type="number" step="0.0001"
+                          value={siteForm.lat}
+                          onChange={e => setSiteForm({ ...siteForm, lat: e.target.value })}
+                          placeholder="e.g. 24.7136"
+                          className="w-full h-9 bg-[#0A0E17] border border-[#1F2937] focus:border-[#10B981] rounded-md px-3 text-[13px] text-white placeholder-[#4B5563] focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-1.5">Longitude</label>
+                        <input
+                          type="number" step="0.0001"
+                          value={siteForm.lng}
+                          onChange={e => setSiteForm({ ...siteForm, lng: e.target.value })}
+                          placeholder="e.g. 46.6753"
+                          className="w-full h-9 bg-[#0A0E17] border border-[#1F2937] focus:border-[#10B981] rounded-md px-3 text-[13px] text-white placeholder-[#4B5563] focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Dimension scores */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-1.5">Water Score (0–100)</label>
+                        <input
+                          type="number" min="0" max="100"
+                          value={siteForm.waterScore}
+                          onChange={e => setSiteForm({ ...siteForm, waterScore: e.target.value })}
+                          className="w-full h-9 bg-[#0A0E17] border border-[#1F2937] focus:border-[#10B981] rounded-md px-3 text-[13px] text-white focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider mb-1.5">Power Capacity (MW)</label>
+                        <input
+                          type="number" min="0"
+                          value={siteForm.powerMW}
+                          onChange={e => setSiteForm({ ...siteForm, powerMW: e.target.value })}
+                          placeholder="e.g. 100"
+                          className="w-full h-9 bg-[#0A0E17] border border-[#1F2937] focus:border-[#10B981] rounded-md px-3 text-[13px] text-white placeholder-[#4B5563] focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                        />
+                      </div>
+                    </div>
+
+                    {siteFormError && <p className="text-red-400 text-[12px]">{siteFormError}</p>}
+
+                    <div className="flex gap-3 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => { setShowAddSiteModal(false); setSiteFormError(''); }}
+                        className="flex-1 border border-[#1F2937] text-[#9CA3AF] hover:text-white hover:border-[#374151] rounded-md py-2 text-sm transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-1 bg-[#10B981] hover:bg-[#059669] text-white rounded-md py-2 text-sm font-semibold transition-colors"
+                      >
+                        Add Site
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
 
         </div>
       </div>
