@@ -3,13 +3,9 @@ import { logger } from "./lib/logger";
 
 const rawPort = process.env["PORT"];
 
-if (!rawPort) {
-  throw new Error(
-    "PORT environment variable is required but was not provided.",
-  );
-}
-
-const port = Number(rawPort);
+// PORT is injected by the platform (pid1 in production, workflow manager in dev).
+// Fall back to 8080 so a missing injection doesn't crash before any logs appear.
+const port = rawPort ? Number(rawPort) : 8080;
 
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
