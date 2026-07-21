@@ -188,10 +188,12 @@ interface SiteDetailProps {
 /* ─── helpers ─────────────────────────────────────────────── */
 const TABS = [
   'Overview',
-  'Water Access',
-  'Infrastructure',
-  'Regulatory',
-  'Cooling Impact',
+  'Water',
+  'Power',
+  'Climate',
+  'Connectivity',
+  'Land',
+  'Zoning',
   'Forecast',
   'Documents',
   'Compare',
@@ -309,12 +311,14 @@ function CardShell({
   iconColor = 'text-[#10B981]',
   children,
   link,
+  onLinkClick,
 }: {
   title: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   iconColor?: string;
   children: React.ReactNode;
   link?: string;
+  onLinkClick?: () => void;
 }) {
   return (
     <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-3 h-full">
@@ -326,7 +330,10 @@ function CardShell({
       </div>
       <div className="flex-1 flex flex-col gap-2 text-[13px]">{children}</div>
       {link && (
-        <a className="text-[#10B981] text-xs flex items-center gap-1 cursor-pointer hover:underline mt-auto pt-1 border-t border-[#1F2937]">
+        <a
+          onClick={onLinkClick}
+          className={`text-[#10B981] text-xs flex items-center gap-1 mt-auto pt-1 border-t border-[#1F2937] ${onLinkClick ? 'cursor-pointer hover:underline' : 'cursor-default'}`}
+        >
           {link} <ChevronRight className="w-3 h-3" />
         </a>
       )}
@@ -386,34 +393,31 @@ function wInfraColor(type: string) {
   return '#60A5FA';                                  // blue (wastewater_treatment)
 }
 
-/* ─── Water Access tab ────────────────────────────────────── */
-function WaterAccessTab({ site }: { site: Site }) {
+/* ─── Water tab ──────────────────────────────────────────── */
+function WaterTab({ site }: { site: Site }) {
   const detail = site.waterAccessDetail;
+  const w = site.water;
 
-  // Fallback if data not yet present
-  if (!detail) {
+  if (!detail && !w) {
     return (
       <div className="flex items-center justify-center h-32">
-        <p className="text-[#4B5563] text-sm">Water access detail not available for this site.</p>
+        <p className="text-[#4B5563] text-sm">Water detail not available for this site.</p>
       </div>
     );
   }
 
-  const sc = scoreColors(detail.overallScore);
-  const rc = riskColors(detail.riskLevel);
+  const score = w?.summary.availabilityScore ?? detail?.overallScore ?? 0;
+  const droughtRisk = (w?.detail.droughtRisk ?? detail?.riskLevel ?? 'Low') as 'Low' | 'Medium' | 'High';
+  const sc = scoreColors(score);
+  const rc = riskColors(droughtRisk);
 
-  // Cooling demand bars
   const coolingRows = [
     { label: 'Air Cooling', value: site.coolingImpact.airCooling },
     { label: 'Liquid Cooling', value: site.coolingImpact.liquidCooling },
     { label: 'Immersion Cooling', value: site.coolingImpact.immersionCooling },
   ];
   const maxCooling = Math.max(...coolingRows.map((c) => parseCoolingValue(c.value)));
-
-  // Timeline max for bar scaling
-  const maxTimelineScore = Math.max(...detail.availabilityTimeline.map((t) => t.score), 100);
-
-  // Nearby water infra for mini map (within 150 km)
+  const maxTimelineScore = detail ? Math.max(...detail.availabilityTimeline.map((t) => t.score), 100) : 100;
   const mapItems = waterInfrastructure.filter((wi) =>
     haversineKm(site.coordinates.lat, site.coordinates.lng, wi.coordinates.lat, wi.coordinates.lng) <= 150
   );
@@ -423,74 +427,71 @@ function WaterAccessTab({ site }: { site: Site }) {
 
       {/* ── 1. Overview row ── */}
       <div className="flex items-start gap-4">
-        {/* Gauge */}
         <div className="flex flex-col items-center gap-1 flex-shrink-0">
-          <CircleGauge score={detail.overallScore} size={88} />
+          <CircleGauge score={score} size={88} />
           <span className={`text-[11px] font-medium ${sc.text}`}>Water Score</span>
         </div>
-
-        {/* Risk badge + AI callout */}
         <div className="flex-1 flex flex-col gap-3 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${rc.bg} ${rc.text} ${rc.border}`}>
-              {detail.riskLevel === 'Low' && <CheckCircle2 className="w-3.5 h-3.5" />}
-              {detail.riskLevel === 'Medium' && <AlertCircle className="w-3.5 h-3.5" />}
-              {detail.riskLevel === 'High' && <XCircle className="w-3.5 h-3.5" />}
-              {detail.riskLevel} Risk
+              {droughtRisk === 'Low' && <CheckCircle2 className="w-3.5 h-3.5" />}
+              {droughtRisk === 'Medium' && <AlertCircle className="w-3.5 h-3.5" />}
+              {droughtRisk === 'High' && <XCircle className="w-3.5 h-3.5" />}
+              {droughtRisk} Drought Risk
             </span>
-            <span className="text-[#4B5563] text-[11px]">Water Risk Level</span>
+            {w && (
+              <>
+                <span className="text-[12px] text-[#6B7280]">Cost: <span className="text-white font-medium">{w.detail.cost}</span></span>
+                <span className="text-[12px] text-[#6B7280]">Source: <span className="text-[#10B981] font-medium">{w.detail.sustainability}</span></span>
+              </>
+            )}
           </div>
-
-          {/* AI Recommendation callout */}
-          <AICallout text={detail.aiRecommendation} />
+          {detail?.aiRecommendation && <AICallout text={detail.aiRecommendation} />}
         </div>
       </div>
 
       {/* ── 2. Nearby Water Sources ── */}
-      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
-        <SectionHeader icon={Droplet} title="Nearby Water Sources" />
-        <table className="w-full text-[13px]">
-          <thead>
-            <tr className="border-b border-[#1F2937]">
-              <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-3">Plant / Source</th>
-              <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-3">Distance</th>
-              <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-3">Capacity</th>
-              <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {detail.nearbyWaterSources.map((src, i) => (
-              <tr key={i} className="border-b border-[#1F2937]/50 last:border-0">
-                <td className="py-2.5 pr-3 text-white font-medium leading-snug">{src.plant}</td>
-                <td className="py-2.5 pr-3 text-[#9CA3AF] whitespace-nowrap">{src.distance}</td>
-                <td className="py-2.5 pr-3 text-[#9CA3AF] leading-snug">{src.capacity}</td>
-                <td className="py-2.5">
-                  <span className={`inline-block text-[11px] font-medium px-2 py-0.5 rounded-full ${statusColor(src.status)}`}>
-                    {src.status}
-                  </span>
-                </td>
+      {detail?.nearbyWaterSources && (
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+          <SectionHeader icon={Droplet} title="Nearby Water Sources" />
+          <table className="w-full text-[13px]">
+            <thead>
+              <tr className="border-b border-[#1F2937]">
+                <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-3">Plant / Source</th>
+                <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-3">Distance</th>
+                <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-3">Capacity</th>
+                <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {detail.nearbyWaterSources.map((src, i) => (
+                <tr key={i} className="border-b border-[#1F2937]/50 last:border-0">
+                  <td className="py-2.5 pr-3 text-white font-medium leading-snug">{src.plant}</td>
+                  <td className="py-2.5 pr-3 text-[#9CA3AF] whitespace-nowrap">{src.distance}</td>
+                  <td className="py-2.5 pr-3 text-[#9CA3AF] leading-snug">{src.capacity}</td>
+                  <td className="py-2.5">
+                    <span className={`inline-block text-[11px] font-medium px-2 py-0.5 rounded-full ${statusColor(src.status)}`}>{src.status}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-      {/* ── 3. Water Demand Analysis ── */}
+      {/* ── 3. Water Demand by Cooling Technology ── */}
       <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
         <SectionHeader icon={BarChart3} title="Water Demand by Cooling Technology" />
         <p className="text-[11px] text-[#6B7280] mb-3 -mt-1">Estimated additional daily usage at this site</p>
         <div className="flex flex-col gap-3">
           {coolingRows.map((c) => {
             const pct = maxCooling > 0 ? (parseCoolingValue(c.value) / maxCooling) * 100 : 0;
-            const col = scoreColors(100 - pct); // invert: lower demand = greener
+            const col = scoreColors(100 - pct);
             return (
               <div key={c.label} className="flex items-center gap-3">
                 <span className="text-[12px] text-[#9CA3AF] w-[120px] flex-shrink-0">{c.label}</span>
                 <div className="flex-1 h-2 bg-[#1F2937] rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{ width: `${pct}%`, backgroundColor: col.bar }}
-                  />
+                  <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: col.bar }} />
                 </div>
                 <span className="text-[12px] font-medium text-white w-[90px] text-right">{c.value}</span>
               </div>
@@ -500,56 +501,51 @@ function WaterAccessTab({ site }: { site: Site }) {
       </div>
 
       {/* ── 4. Water Availability Timeline ── */}
-      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
-        <SectionHeader icon={BarChart3} title="Water Availability Timeline" />
-        <p className="text-[11px] text-[#6B7280] mb-4 -mt-1">Projected water availability score by year</p>
-        <div className="flex flex-col gap-3">
-          {detail.availabilityTimeline.map((item) => {
-            const pct = (item.score / maxTimelineScore) * 100;
-            const c = scoreColors(item.score);
-            return (
-              <div key={item.year} className="flex items-center gap-3">
-                <span className="text-[12px] font-medium text-[#9CA3AF] w-10 flex-shrink-0">{item.year}</span>
-                <div className="flex-1 h-5 bg-[#1F2937] rounded-md overflow-hidden relative">
-                  <div
-                    className="h-full rounded-md transition-all"
-                    style={{ width: `${pct}%`, backgroundColor: c.bar, opacity: 0.8 }}
-                  />
+      {detail?.availabilityTimeline && (
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+          <SectionHeader icon={BarChart3} title="Water Availability Timeline" />
+          <p className="text-[11px] text-[#6B7280] mb-4 -mt-1">Projected water availability score by year</p>
+          <div className="flex flex-col gap-3">
+            {detail.availabilityTimeline.map((item) => {
+              const pct = (item.score / maxTimelineScore) * 100;
+              const c = scoreColors(item.score);
+              return (
+                <div key={item.year} className="flex items-center gap-3">
+                  <span className="text-[12px] font-medium text-[#9CA3AF] w-10 flex-shrink-0">{item.year}</span>
+                  <div className="flex-1 h-5 bg-[#1F2937] rounded-md overflow-hidden relative">
+                    <div className="h-full rounded-md transition-all" style={{ width: `${pct}%`, backgroundColor: c.bar, opacity: 0.8 }} />
+                  </div>
+                  <span className={`text-[12px] font-bold w-8 text-right ${c.text}`}>{item.score}</span>
                 </div>
-                <span className={`text-[12px] font-bold w-8 text-right ${c.text}`}>{item.score}</span>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── 5. Supporting Documents ── */}
-      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
-        <SectionHeader icon={FileText} title="Supporting Documents" />
-        <div className="flex flex-col divide-y divide-[#1F2937]">
-          {detail.supportingDocuments.map((doc, i) => (
-            <a
-              key={i}
-              href="#"
-              className="flex items-center gap-3 py-2.5 hover:bg-[#1F2937]/40 rounded-lg px-1 -mx-1 transition-colors group"
-            >
-              <div className="w-7 h-7 rounded-lg bg-[#1F2937] flex items-center justify-center flex-shrink-0 group-hover:bg-sky-500/10 transition-colors">
-                <FileText className="w-3.5 h-3.5 text-[#6B7280] group-hover:text-sky-400 transition-colors" />
-              </div>
-              <span className="flex-1 text-[13px] text-[#D1D5DB] group-hover:text-white transition-colors leading-snug">{doc.name}</span>
-              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#1F2937] text-[#9CA3AF] flex-shrink-0">{doc.type}</span>
-              <ChevronRight className="w-3.5 h-3.5 text-[#4B5563] group-hover:text-sky-400 flex-shrink-0 transition-colors" />
-            </a>
-          ))}
+      {detail?.supportingDocuments && (
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+          <SectionHeader icon={FileText} title="Supporting Documents" />
+          <div className="flex flex-col divide-y divide-[#1F2937]">
+            {detail.supportingDocuments.map((doc, i) => (
+              <a key={i} href="#" className="flex items-center gap-3 py-2.5 hover:bg-[#1F2937]/40 rounded-lg px-1 -mx-1 transition-colors group">
+                <div className="w-7 h-7 rounded-lg bg-[#1F2937] flex items-center justify-center flex-shrink-0 group-hover:bg-sky-500/10 transition-colors">
+                  <FileText className="w-3.5 h-3.5 text-[#6B7280] group-hover:text-sky-400 transition-colors" />
+                </div>
+                <span className="flex-1 text-[13px] text-[#D1D5DB] group-hover:text-white transition-colors leading-snug">{doc.name}</span>
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#1F2937] text-[#9CA3AF] flex-shrink-0">{doc.type}</span>
+                <ChevronRight className="w-3.5 h-3.5 text-[#4B5563] group-hover:text-sky-400 flex-shrink-0 transition-colors" />
+              </a>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* ── 6. Mini Water Infrastructure Map ── */}
+      {/* ── 6. Nearby Water Infrastructure Map ── */}
       <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
         <SectionHeader icon={MapPin} title="Nearby Water Infrastructure" />
         <p className="text-[11px] text-[#6B7280] mb-3 -mt-1">TSE plants, pipelines & reservoirs within 150 km</p>
-
-        {/* Legend */}
         <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-3">
           {[
             { label: 'Treatment Plant', color: '#60A5FA' },
@@ -564,47 +560,16 @@ function WaterAccessTab({ site }: { site: Site }) {
             </div>
           ))}
         </div>
-
         <div className="rounded-xl overflow-hidden" style={{ height: 280 }}>
-          <MapContainer
-            center={[site.coordinates.lat, site.coordinates.lng]}
-            zoom={7}
-            style={{ width: '100%', height: '100%' }}
-            zoomControl={true}
-            attributionControl={false}
-          >
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              attribution=""
-            />
-
-            {/* Site marker — white */}
-            <CircleMarker
-              center={[site.coordinates.lat, site.coordinates.lng]}
-              radius={8}
-              pathOptions={{ color: '#FFFFFF', fillColor: '#FFFFFF', fillOpacity: 1, weight: 2 }}
-            >
-              <Tooltip permanent direction="top" offset={[0, -10]}>
-                <span style={{ fontSize: 11, fontWeight: 600 }}>{site.name}</span>
-              </Tooltip>
+          <MapContainer center={[site.coordinates.lat, site.coordinates.lng]} zoom={7} style={{ width: '100%', height: '100%' }} zoomControl attributionControl={false}>
+            <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" attribution="" />
+            <CircleMarker center={[site.coordinates.lat, site.coordinates.lng]} radius={8} pathOptions={{ color: '#FFFFFF', fillColor: '#FFFFFF', fillOpacity: 1, weight: 2 }}>
+              <Tooltip permanent direction="top" offset={[0, -10]}><span style={{ fontSize: 11, fontWeight: 600 }}>{site.name}</span></Tooltip>
             </CircleMarker>
-
-            {/* Water infrastructure markers */}
             {mapItems.map((wi) => (
-              <CircleMarker
-                key={wi.id}
-                center={[wi.coordinates.lat, wi.coordinates.lng]}
-                radius={6}
-                pathOptions={{
-                  color: wInfraColor(wi.type),
-                  fillColor: wInfraColor(wi.type),
-                  fillOpacity: 0.75,
-                  weight: 1.5,
-                }}
-              >
+              <CircleMarker key={wi.id} center={[wi.coordinates.lat, wi.coordinates.lng]} radius={6} pathOptions={{ color: wInfraColor(wi.type), fillColor: wInfraColor(wi.type), fillOpacity: 0.75, weight: 1.5 }}>
                 <Tooltip direction="top" offset={[0, -8]}>
-                  <span style={{ fontSize: 11 }}>{wi.name}</span>
-                  <br />
+                  <span style={{ fontSize: 11 }}>{wi.name}</span><br />
                   <span style={{ fontSize: 10, color: '#9CA3AF' }}>{wi.capacity}</span>
                 </Tooltip>
               </CircleMarker>
@@ -616,7 +581,7 @@ function WaterAccessTab({ site }: { site: Site }) {
   );
 }
 
-/* ─── Infrastructure tab ──────────────────────────────────── */
+/* ─── Infrastructure tab (legacy — kept for data re-use) ─────── */
 function InfrastructureTab({ site }: { site: Site }) {
   const detail = site.infrastructureDetail;
 
@@ -744,8 +709,272 @@ function InfrastructureTab({ site }: { site: Site }) {
   );
 }
 
+/* ─── Power tab ───────────────────────────────────────────── */
+function PowerTab({ site }: { site: Site }) {
+  const pw = site.power;
+  const electrical = site.infrastructureDetail?.electrical;
+  if (!pw) return <PlaceholderTab name="Power" />;
+
+  const relColor = (r: string) =>
+    r === 'High' ? 'text-[#10B981]' : r === 'Low' ? 'text-red-400' : 'text-amber-400';
+  const nearbyPower = (site.nearbyInfrastructure ?? []).filter((i) => i.type === 'Power');
+
+  return (
+    <div className="flex flex-col gap-5">
+
+      {/* ── 1. Summary stat cards ── */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-[11px] text-[#6B7280]">Distance to Substation</span>
+          <span className="text-xl font-bold text-white">{pw.summary.distanceToSubstation}</span>
+        </div>
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-[11px] text-[#6B7280]">Available Capacity</span>
+          <span className="text-xl font-bold text-amber-400">{pw.summary.availableCapacityMW} MW</span>
+        </div>
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-[11px] text-[#6B7280]">Grid Reliability</span>
+          <span className={`text-xl font-bold ${relColor(pw.summary.reliability)}`}>{pw.summary.reliability}</span>
+        </div>
+      </div>
+
+      {/* ── 2. Power detail ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <SectionHeader icon={Zap} title="Power Detail" />
+        <div className="flex flex-col gap-2 text-[13px]">
+          <Row label="Outage history" value={pw.detail.outageHistory} />
+          <Row label="Electricity price" value={<span className="font-medium text-amber-300">{pw.detail.electricityPrice}</span>} />
+          <Row label="Renewable options" value={<span className="text-xs text-right leading-snug text-[#9CA3AF]">{pw.detail.renewableAvailability}</span>} />
+          <div className="mt-1 pt-2 border-t border-[#1F2937]">
+            <p className="text-[11px] text-[#6B7280] mb-1">Expansion potential</p>
+            <p className="text-[12px] text-[#D1D5DB] leading-snug">{pw.detail.expansionPotential}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3. Substation detail (from infrastructure data) ── */}
+      {electrical && (
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+          <SectionHeader icon={Zap} title="Substation Detail" />
+          <div className="flex flex-col gap-2 text-[13px]">
+            <Row label="Grid operator" value={electrical.gridOperator} />
+            <Row label="Substation" value={<span className="text-xs text-right leading-snug">{electrical.substation}</span>} />
+            <Row label="Voltage" value={<span className="font-semibold text-amber-400">{electrical.voltage}</span>} />
+            <Row label="Distance" value={electrical.distance} />
+            <Row label="Spare capacity" value={<span className="font-semibold text-[#10B981]">{electrical.spareCapacity}</span>} />
+          </div>
+        </div>
+      )}
+
+      {/* ── 4. Nearby power nodes ── */}
+      {nearbyPower.length > 0 && (
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+          <SectionHeader icon={MapPin} title="Nearby Substations & Power Nodes" />
+          <div className="flex flex-col divide-y divide-[#1F2937]">
+            {nearbyPower.map((item, i) => (
+              <div key={i} className="flex items-center justify-between py-2.5">
+                <span className="text-[13px] text-white font-medium">{item.name}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[12px] text-[#9CA3AF]">{item.distance}</span>
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${statusColor(item.status)}`}>{item.status}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Connectivity tab ────────────────────────────────────── */
+function ConnectivityTab({ site }: { site: Site }) {
+  const co = site.connectivity;
+  const fiber = site.infrastructureDetail?.fiber;
+  if (!co) return <PlaceholderTab name="Connectivity" />;
+
+  const fiberColor =
+    co.summary.fiberProviders >= 2 ? 'text-[#10B981]' :
+    co.summary.fiberProviders === 1 ? 'text-amber-400' : 'text-red-400';
+  const redundancyColor =
+    co.summary.redundancy === 'Yes' ? 'text-[#10B981]' :
+    co.summary.redundancy === 'No' ? 'text-red-400' : 'text-amber-400';
+  const nearbyFiber = (site.nearbyInfrastructure ?? []).filter((i) =>
+    i.type.toLowerCase().includes('connect') || i.type.toLowerCase().includes('fiber') || i.type.toLowerCase().includes('network')
+  );
+
+  return (
+    <div className="flex flex-col gap-5">
+
+      {/* ── 1. Summary stat cards ── */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-[11px] text-[#6B7280]">Distance to Backbone</span>
+          <span className="text-xl font-bold text-white">{co.summary.distanceToBackbone}</span>
+        </div>
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-[11px] text-[#6B7280]">Fiber Providers</span>
+          <span className={`text-xl font-bold ${fiberColor}`}>
+            {co.summary.fiberProviders === 0 ? 'None' : `${co.summary.fiberProviders} carrier${co.summary.fiberProviders > 1 ? 's' : ''}`}
+          </span>
+        </div>
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-[11px] text-[#6B7280]">Redundancy</span>
+          <span className={`text-xl font-bold ${redundancyColor}`}>{co.summary.redundancy}</span>
+        </div>
+      </div>
+
+      {/* ── 2. Network reach ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <SectionHeader icon={Network} title="Network Reach" />
+        <div className="flex flex-col gap-2 text-[13px]">
+          <Row label="Latency to cities" value={<span className="text-xs text-right leading-snug text-[#9CA3AF]">{co.detail.latencyToMajorCities}</span>} />
+          <Row label="Internet exchange" value={<span className="text-xs text-right leading-snug text-[#9CA3AF]">{co.detail.proximityToIX}</span>} />
+        </div>
+      </div>
+
+      {/* ── 3. Fiber infrastructure detail ── */}
+      {fiber && (
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+          <SectionHeader icon={Network} title="Fiber Infrastructure Detail" />
+          <div className="flex flex-col gap-2 text-[13px]">
+            <Row label="Provider(s)" value={<span className="text-xs text-right leading-snug">{fiber.provider}</span>} />
+            <Row label="Redundancy" value={<span className="text-xs text-right leading-snug">{fiber.redundancy}</span>} />
+            <Row label="Bandwidth" value={<span className="font-semibold text-violet-400">{fiber.bandwidth}</span>} />
+            <div className="mt-1 pt-2 border-t border-[#1F2937]">
+              <p className="text-[11px] text-[#6B7280] mb-1">Planned expansion</p>
+              <p className="text-[12px] text-[#D1D5DB] leading-snug">{fiber.plannedExpansion}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 4. Nearby fiber hubs ── */}
+      {nearbyFiber.length > 0 && (
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+          <SectionHeader icon={MapPin} title="Nearby Fiber Hubs" />
+          <div className="flex flex-col divide-y divide-[#1F2937]">
+            {nearbyFiber.map((item, i) => (
+              <div key={i} className="flex items-center justify-between py-2.5">
+                <span className="text-[13px] text-white font-medium">{item.name}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[12px] text-[#9CA3AF]">{item.distance}</span>
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${statusColor(item.status)}`}>{item.status}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Climate tab ─────────────────────────────────────────── */
+function ClimateTab({ site }: { site: Site }) {
+  const cl = site.climate;
+  if (!cl) return <PlaceholderTab name="Climate" />;
+
+  const pueNum = parseFloat(cl.summary.estimatedPUEImpact.replace(/[^0-9.]/g, '')) || 0;
+  const pueColor = pueNum <= 0.10 ? 'text-[#10B981]' : pueNum <= 0.14 ? 'text-amber-400' : 'text-red-400';
+
+  const aiText = `This site's peak summer temperature of ${cl.summary.peakSummerTemp} combined with ${cl.detail.humidity} makes free-air cooling unviable during peak months. Liquid cooling or Direct Liquid Cooling (DLC) is strongly recommended to achieve PUE targets below 1.4. The ${cl.detail.extremeHeatDays} extreme heat days per year above 40°C require full mechanical cooling capacity — no free-cooling credit can be assumed. The estimated ${cl.summary.estimatedPUEImpact} versus a temperate baseline should be factored into total cost of ownership comparisons with non-Gulf sites.`;
+
+  return (
+    <div className="flex flex-col gap-5">
+
+      {/* ── 1. Summary stat cards ── */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-[11px] text-[#6B7280]">Avg. Yearly Temp</span>
+          <span className="text-xl font-bold text-white">{cl.summary.avgYearlyTemp}</span>
+        </div>
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-[11px] text-[#6B7280]">Peak Summer</span>
+          <span className="text-xl font-bold text-rose-400">{cl.summary.peakSummerTemp}</span>
+        </div>
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-[11px] text-[#6B7280]">PUE Penalty</span>
+          <span className={`text-xl font-bold ${pueColor}`}>{cl.summary.estimatedPUEImpact.split(' ')[0]}</span>
+        </div>
+      </div>
+
+      {/* ── 2. Detailed climate data ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <SectionHeader icon={Thermometer} title="Climate Detail" />
+        <div className="flex flex-col gap-2 text-[13px]">
+          <Row label="Humidity" value={cl.detail.humidity} />
+          <Row label="Extreme heat days" value={<span className="font-semibold text-rose-400">{cl.detail.extremeHeatDays} days/year above 40°C</span>} />
+          <Row label="Full PUE impact" value={<span className="text-xs text-right leading-snug text-[#9CA3AF]">{cl.summary.estimatedPUEImpact}</span>} />
+        </div>
+      </div>
+
+      {/* ── 3. AI recommendation ── */}
+      <AICallout text={aiText} />
+    </div>
+  );
+}
+
+/* ─── Land tab ────────────────────────────────────────────── */
+function LandTab({ site }: { site: Site }) {
+  const la = site.land;
+  const transport = site.infrastructureDetail?.transportation;
+  if (!la) return <PlaceholderTab name="Land" />;
+
+  const floodColor =
+    la.summary.floodRisk === 'Low' ? 'text-[#10B981]' :
+    la.summary.floodRisk === 'Medium' ? 'text-amber-400' : 'text-red-400';
+
+  return (
+    <div className="flex flex-col gap-5">
+
+      {/* ── 1. Summary stat cards ── */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-[11px] text-[#6B7280]">Land Price</span>
+          <span className="text-xl font-bold text-white">{la.summary.landPrice}</span>
+        </div>
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-[11px] text-[#6B7280]">Available Parcel</span>
+          <span className="text-base font-bold text-[#10B981] leading-snug">{la.summary.parcelSize}</span>
+        </div>
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-[11px] text-[#6B7280]">Flood Risk</span>
+          <span className={`text-xl font-bold ${floodColor}`}>{la.summary.floodRisk}</span>
+        </div>
+      </div>
+
+      {/* ── 2. Topography detail ── */}
+      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+        <SectionHeader icon={MapPin} title="Topography & Site Conditions" />
+        <div className="flex flex-col gap-2 text-[13px]">
+          <Row label="Flatness / slope" value={la.detail.flatnessSlope} />
+          <Row label="Soil stability" value={la.detail.soilStability} />
+          <Row label="Room for expansion" value={la.detail.roomForExpansion} />
+          <Row label="Distance to roads" value={la.detail.distanceToRoads} />
+        </div>
+      </div>
+
+      {/* ── 3. Transport & access (from infrastructure data) ── */}
+      {transport && (
+        <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+          <SectionHeader icon={Truck} title="Transport & Access" />
+          <div className="flex flex-col gap-2 text-[13px]">
+            <Row label="Nearest highway" value={<span className="text-xs text-right leading-snug">{transport.nearestHighway}</span>} />
+            <Row label="Airport" value={<span className="text-xs text-right leading-snug">{transport.airportDistance}</span>} />
+            <div className="mt-1 pt-2 border-t border-[#1F2937]">
+              <p className="text-[11px] text-[#6B7280] mb-1">Logistics notes</p>
+              <p className="text-[12px] text-[#D1D5DB] leading-snug">{transport.logisticsNotes}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Overview tab ────────────────────────────────────────── */
-function OverviewTab({ site }: { site: Site }) {
+function OverviewTab({ site, setActiveTab }: { site: Site; setActiveTab: (tab: Tab) => void }) {
   function ScoreBadge({ score }: { score: number }) {
     const c = scoreColors(score);
     const label = score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Moderate' : 'Poor';
@@ -776,7 +1005,7 @@ function OverviewTab({ site }: { site: Site }) {
     <div className="grid grid-cols-3 gap-4">
 
       {/* ── 1. Water ── */}
-      <CardShell title="Water" icon={Droplets} iconColor="text-sky-400" link="View details">
+      <CardShell title="Water" icon={Droplets} iconColor="text-sky-400" link="View details" onLinkClick={() => setActiveTab('Water')}>
         {w ? (
           <>
             <Row label="Availability score" value={<ScoreBadge score={w.summary.availabilityScore} />} />
@@ -787,7 +1016,7 @@ function OverviewTab({ site }: { site: Site }) {
       </CardShell>
 
       {/* ── 2. Power ── */}
-      <CardShell title="Power" icon={Zap} iconColor="text-amber-400" link="View details">
+      <CardShell title="Power" icon={Zap} iconColor="text-amber-400" link="View details" onLinkClick={() => setActiveTab('Power')}>
         {pw ? (
           <>
             <Row label="Substation distance" value={pw.summary.distanceToSubstation} />
@@ -798,7 +1027,7 @@ function OverviewTab({ site }: { site: Site }) {
       </CardShell>
 
       {/* ── 3. Climate / Cooling Efficiency ── */}
-      <CardShell title="Climate / Cooling" icon={Thermometer} iconColor="text-rose-400" link="View details">
+      <CardShell title="Climate / Cooling" icon={Thermometer} iconColor="text-rose-400" link="View details" onLinkClick={() => setActiveTab('Climate')}>
         {cl ? (
           <>
             <Row label="Avg. yearly temp" value={cl.summary.avgYearlyTemp} />
@@ -809,7 +1038,7 @@ function OverviewTab({ site }: { site: Site }) {
       </CardShell>
 
       {/* ── 4. Connectivity ── */}
-      <CardShell title="Connectivity" icon={Network} iconColor="text-violet-400" link="View details">
+      <CardShell title="Connectivity" icon={Network} iconColor="text-violet-400" link="View details" onLinkClick={() => setActiveTab('Connectivity')}>
         {co ? (
           <>
             <Row label="Distance to backbone" value={co.summary.distanceToBackbone} />
@@ -831,7 +1060,7 @@ function OverviewTab({ site }: { site: Site }) {
       </CardShell>
 
       {/* ── 5. Land / Topography ── */}
-      <CardShell title="Land / Topography" icon={MapPin} iconColor="text-emerald-400" link="View details">
+      <CardShell title="Land / Topography" icon={MapPin} iconColor="text-emerald-400" link="View details" onLinkClick={() => setActiveTab('Land')}>
         {la ? (
           <>
             <Row label="Land price" value={la.summary.landPrice} />
@@ -842,7 +1071,7 @@ function OverviewTab({ site }: { site: Site }) {
       </CardShell>
 
       {/* ── 6. Zoning / SEZ ── */}
-      <CardShell title="Zoning / SEZ" icon={Shield} iconColor="text-indigo-400" link="View details">
+      <CardShell title="Zoning / SEZ" icon={Shield} iconColor="text-indigo-400" link="View details" onLinkClick={() => setActiveTab('Zoning')}>
         {z ? (
           <>
             <Row label="DC permitted" value={<span className={`font-medium ${permitColor(z.summary.dataCenterPermitted)}`}>{z.summary.dataCenterPermitted}</span>} />
@@ -1048,140 +1277,172 @@ function CoolingTab({ site }: { site: Site }) {
   );
 }
 
-/* ─── Regulatory tab ──────────────────────────────────────── */
-function RegulatoryTab({ site }: { site: Site }) {
+/* ─── Zoning tab ──────────────────────────────────────────── */
+function ZoningTab({ site }: { site: Site }) {
   const detail = site.regulatoryDetail;
+  const z = site.zoning;
 
-  if (!detail) {
+  if (!detail && !z) {
     return (
       <div className="flex items-center justify-center h-32">
-        <p className="text-[#4B5563] text-sm">Regulatory detail not available for this site.</p>
+        <p className="text-[#4B5563] text-sm">Zoning detail not available for this site.</p>
       </div>
     );
   }
 
-  const complexityColor = site.regulatory.complexityLevel === 'Low'
-    ? 'text-[#10B981]' : site.regulatory.complexityLevel === 'Medium'
-    ? 'text-amber-400' : 'text-red-400';
+  const permitColor = (v: string) =>
+    v === 'Yes' ? 'text-[#10B981]' : v === 'No' ? 'text-red-400' : 'text-amber-400';
+  const easeColor = (v: string) =>
+    v === 'Easy' ? 'text-[#10B981]' : v === 'Difficult' ? 'text-red-400' : 'text-amber-400';
+  const complexityBadge = detail
+    ? site.regulatory.complexityLevel === 'Low'
+      ? 'text-[#10B981] bg-[#10B981]/10 border-[#10B981]/30'
+      : site.regulatory.complexityLevel === 'Medium'
+      ? 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+      : 'text-red-400 bg-red-500/10 border-red-500/30'
+    : '';
+  const approvalTimeColor = detail
+    ? site.regulatory.complexityLevel === 'Low' ? 'text-[#10B981]'
+      : site.regulatory.complexityLevel === 'Medium' ? 'text-amber-400' : 'text-red-400'
+    : 'text-amber-400';
 
   return (
     <div className="flex flex-col gap-5">
 
-      {/* ── 1. Required Agencies ── */}
-      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
-        <div className="flex items-center justify-between mb-4">
-          <SectionHeader icon={Building2} title="Required Agencies" />
-          <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${
-            site.regulatory.complexityLevel === 'Low'
-              ? 'text-[#10B981] bg-[#10B981]/10 border-[#10B981]/30'
-              : site.regulatory.complexityLevel === 'Medium'
-              ? 'text-amber-400 bg-amber-500/10 border-amber-500/30'
-              : 'text-red-400 bg-red-500/10 border-red-500/30'
-          }`}>
-            {detail.requiredAgencies.length} agencies · {site.regulatory.complexityLevel} complexity
-          </span>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {detail.requiredAgencies.map((agency, i) => (
-            <div key={i} className="flex items-start gap-3 bg-[#111827] border border-[#1F2937] rounded-xl p-3">
-              <div className="w-7 h-7 rounded-lg bg-[#1F2937] flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Building2 className="w-3.5 h-3.5 text-violet-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[13px] font-semibold text-white leading-snug">{agency.name}</p>
-                <p className="text-[11px] text-[#6B7280] mt-0.5 leading-snug">{agency.role}</p>
-              </div>
+      {/* ── 0. Zoning summary stat cards ── */}
+      {z && (
+        <>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-1">
+              <span className="text-[11px] text-[#6B7280]">DC Permitted</span>
+              <span className={`text-xl font-bold ${permitColor(z.summary.dataCenterPermitted)}`}>{z.summary.dataCenterPermitted}</span>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── 2. Required Permits ── */}
-      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
-        <SectionHeader icon={FileText} title="Required Permits" />
-        <div className="grid grid-cols-2 gap-x-6 gap-y-0">
-          {detail.requiredPermits.map((permit, i) => (
-            <div key={i} className="flex items-start gap-2.5 py-2 border-b border-[#1F2937]/60 last:border-0">
-              <div className="w-5 h-5 rounded-md bg-violet-500/10 border border-violet-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <FileText className="w-3 h-3 text-violet-400" />
-              </div>
-              <span className="text-[12px] text-[#D1D5DB] leading-snug">{permit}</span>
+            <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-1">
+              <span className="text-[11px] text-[#6B7280]">Permitting Speed</span>
+              <span className="text-base font-bold text-amber-300 leading-snug">{z.summary.permittingSpeed}</span>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── 3. Approval Process ── */}
-      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
-        <div className="flex items-center justify-between mb-4">
-          <SectionHeader icon={Clock} title="Approval Process" />
-          <span className="text-[11px] text-[#6B7280]">
-            Est. total: <span className={`font-semibold ${complexityColor}`}>{site.regulatory.estApprovalTime}</span>
-          </span>
-        </div>
-
-        {/* Vertical timeline */}
-        <div className="relative">
-          {/* connecting line */}
-          <div className="absolute left-[15px] top-6 bottom-6 w-[2px] bg-[#1F2937]" />
-
-          <div className="flex flex-col gap-0">
-            {detail.approvalProcess.map((item, i) => (
-              <div key={i} className="relative flex gap-4 pb-5 last:pb-0">
-                {/* Dot */}
-                <div className="relative z-10 w-8 flex-shrink-0 flex items-start justify-center pt-0.5">
-                  <div className={`w-[30px] h-[30px] rounded-full border-2 flex items-center justify-center text-[11px] font-bold
-                    ${i === 0 ? 'bg-[#10B981]/15 border-[#10B981]/50 text-[#10B981]'
-                    : i === detail.approvalProcess.length - 1 ? 'bg-violet-500/15 border-violet-500/40 text-violet-400'
-                    : 'bg-[#1F2937] border-[#374151] text-[#6B7280]'}`}>
-                    {i + 1}
-                  </div>
-                </div>
-
-                {/* Content card */}
-                <div className="flex-1 bg-[#111827] border border-[#1F2937] rounded-xl p-3.5 mb-0">
-                  <div className="flex items-start justify-between gap-3 mb-1.5">
-                    <h4 className="text-[13px] font-semibold text-white leading-snug">{item.step}</h4>
-                    <span className="flex-shrink-0 flex items-center gap-1 text-[11px] font-medium text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full whitespace-nowrap">
-                      <Clock className="w-3 h-3" />
-                      {item.typicalDuration}
-                    </span>
-                  </div>
-                  <p className="text-[12px] text-[#9CA3AF] leading-relaxed">{item.description}</p>
-                </div>
-              </div>
-            ))}
+            <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-1">
+              <span className="text-[11px] text-[#6B7280]">Ease of Permits</span>
+              <span className={`text-xl font-bold ${easeColor(z.detail.easeOfPermits)}`}>{z.detail.easeOfPermits}</span>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* ── 4. Similar Projects ── */}
-      <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
-        <SectionHeader icon={BarChart3} title="Similar Projects — Approval Benchmarks" />
-        <table className="w-full text-[13px]">
-          <thead>
-            <tr className="border-b border-[#1F2937]">
-              <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-3">Project</th>
-              <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-3">Location</th>
-              <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2">Approval Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {detail.similarProjects.map((proj, i) => (
-              <tr key={i} className="border-b border-[#1F2937]/50 last:border-0">
-                <td className="py-2.5 pr-3 text-white font-medium leading-snug">{proj.name}</td>
-                <td className="py-2.5 pr-3 text-[#9CA3AF]">{proj.location}</td>
-                <td className="py-2.5">
-                  <span className="font-semibold text-amber-400">{proj.approvalTime}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+            <SectionHeader icon={Shield} title="Zoning & Incentives" />
+            <div className="flex flex-col gap-2 text-[13px]">
+              <Row label="SEZ status" value={<span className="text-xs text-right leading-snug text-[#9CA3AF]">{z.summary.sezStatus}</span>} />
+              <Row label="Tax incentives" value={<span className="text-xs text-right leading-snug text-[#9CA3AF]">{z.detail.taxIncentives}</span>} />
+              <Row label="Environmental restrictions" value={<span className="text-xs text-right leading-snug text-[#9CA3AF]">{z.detail.environmentalRestrictions}</span>} />
+              <Row label="Government support" value={<span className="text-xs text-right leading-snug text-[#9CA3AF]">{z.detail.governmentSupport}</span>} />
+            </div>
+          </div>
+        </>
+      )}
 
-      {/* ── 5. AI Advice ── */}
-      <AICallout text={detail.aiAdvice} />
+      {/* ── 1. Required Agencies ── */}
+      {detail && (
+        <>
+          <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+            <div className="flex items-center justify-between mb-4">
+              <SectionHeader icon={Building2} title="Required Agencies" />
+              <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${complexityBadge}`}>
+                {detail.requiredAgencies.length} agencies · {site.regulatory.complexityLevel} complexity
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {detail.requiredAgencies.map((agency, i) => (
+                <div key={i} className="flex items-start gap-3 bg-[#111827] border border-[#1F2937] rounded-xl p-3">
+                  <div className="w-7 h-7 rounded-lg bg-[#1F2937] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Building2 className="w-3.5 h-3.5 text-violet-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold text-white leading-snug">{agency.name}</p>
+                    <p className="text-[11px] text-[#6B7280] mt-0.5 leading-snug">{agency.role}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── 2. Required Permits ── */}
+          <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+            <SectionHeader icon={FileText} title="Required Permits" />
+            <div className="grid grid-cols-2 gap-x-6 gap-y-0">
+              {detail.requiredPermits.map((permit, i) => (
+                <div key={i} className="flex items-start gap-2.5 py-2 border-b border-[#1F2937]/60 last:border-0">
+                  <div className="w-5 h-5 rounded-md bg-violet-500/10 border border-violet-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <FileText className="w-3 h-3 text-violet-400" />
+                  </div>
+                  <span className="text-[12px] text-[#D1D5DB] leading-snug">{permit}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── 3. Approval Process ── */}
+          <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+            <div className="flex items-center justify-between mb-4">
+              <SectionHeader icon={Clock} title="Approval Process" />
+              <span className="text-[11px] text-[#6B7280]">
+                Est. total: <span className={`font-semibold ${approvalTimeColor}`}>{site.regulatory.estApprovalTime}</span>
+              </span>
+            </div>
+            <div className="relative">
+              <div className="absolute left-[15px] top-6 bottom-6 w-[2px] bg-[#1F2937]" />
+              <div className="flex flex-col gap-0">
+                {detail.approvalProcess.map((item, i) => (
+                  <div key={i} className="relative flex gap-4 pb-5 last:pb-0">
+                    <div className="relative z-10 w-8 flex-shrink-0 flex items-start justify-center pt-0.5">
+                      <div className={`w-[30px] h-[30px] rounded-full border-2 flex items-center justify-center text-[11px] font-bold
+                        ${i === 0 ? 'bg-[#10B981]/15 border-[#10B981]/50 text-[#10B981]'
+                        : i === detail.approvalProcess.length - 1 ? 'bg-violet-500/15 border-violet-500/40 text-violet-400'
+                        : 'bg-[#1F2937] border-[#374151] text-[#6B7280]'}`}>
+                        {i + 1}
+                      </div>
+                    </div>
+                    <div className="flex-1 bg-[#111827] border border-[#1F2937] rounded-xl p-3.5 mb-0">
+                      <div className="flex items-start justify-between gap-3 mb-1.5">
+                        <h4 className="text-[13px] font-semibold text-white leading-snug">{item.step}</h4>
+                        <span className="flex-shrink-0 flex items-center gap-1 text-[11px] font-medium text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full whitespace-nowrap">
+                          <Clock className="w-3 h-3" />
+                          {item.typicalDuration}
+                        </span>
+                      </div>
+                      <p className="text-[12px] text-[#9CA3AF] leading-relaxed">{item.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ── 4. Similar Projects ── */}
+          <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-4">
+            <SectionHeader icon={BarChart3} title="Similar Projects — Approval Benchmarks" />
+            <table className="w-full text-[13px]">
+              <thead>
+                <tr className="border-b border-[#1F2937]">
+                  <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-3">Project</th>
+                  <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-3">Location</th>
+                  <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2">Approval Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detail.similarProjects.map((proj, i) => (
+                  <tr key={i} className="border-b border-[#1F2937]/50 last:border-0">
+                    <td className="py-2.5 pr-3 text-white font-medium leading-snug">{proj.name}</td>
+                    <td className="py-2.5 pr-3 text-[#9CA3AF]">{proj.location}</td>
+                    <td className="py-2.5"><span className="font-semibold text-amber-400">{proj.approvalTime}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ── 5. AI Advice ── */}
+          <AICallout text={detail.aiAdvice} />
+        </>
+      )}
     </div>
   );
 }
@@ -1846,15 +2107,16 @@ export function SiteDetail({ site, onNavigateToChat }: SiteDetailProps) {
 
       {/* ── Tab content ── */}
       <div className="p-5">
-        {activeTab === 'Overview' && <OverviewTab site={site} />}
-        {activeTab === 'Water Access' && <WaterAccessTab site={site} />}
-        {activeTab === 'Infrastructure' && <InfrastructureTab site={site} />}
-        {activeTab === 'Regulatory' && <RegulatoryTab site={site} />}
-        {activeTab === 'Cooling Impact' && <CoolingTab site={site} />}
-        {activeTab === 'Forecast' && <ForecastTab site={site} />}
-        {activeTab === 'Documents' && <DocumentsTab site={site} onNavigateToChat={onNavigateToChat} />}
-        {activeTab === 'Compare' && <CompareTab site={site} />}
-        {activeTab !== 'Overview' && activeTab !== 'Water Access' && activeTab !== 'Infrastructure' && activeTab !== 'Regulatory' && activeTab !== 'Cooling Impact' && activeTab !== 'Forecast' && activeTab !== 'Documents' && activeTab !== 'Compare' && <PlaceholderTab name={activeTab} />}
+        {activeTab === 'Overview'     && <OverviewTab site={site} setActiveTab={setActiveTab} />}
+        {activeTab === 'Water'        && <WaterTab site={site} />}
+        {activeTab === 'Power'        && <PowerTab site={site} />}
+        {activeTab === 'Climate'      && <ClimateTab site={site} />}
+        {activeTab === 'Connectivity' && <ConnectivityTab site={site} />}
+        {activeTab === 'Land'         && <LandTab site={site} />}
+        {activeTab === 'Zoning'       && <ZoningTab site={site} />}
+        {activeTab === 'Forecast'     && <ForecastTab site={site} />}
+        {activeTab === 'Documents'    && <DocumentsTab site={site} onNavigateToChat={onNavigateToChat} />}
+        {activeTab === 'Compare'      && <CompareTab site={site} />}
       </div>
     </div>
   );

@@ -1,0 +1,50 @@
+Update the tab bar on the Site Detail card to: Overview | Water | Power |
+Climate | Connectivity | Land | Zoning | Forecast | Documents | Compare
+
+Rebuild each tab's content to show the FULL data for that dimension
+(summary + detail fields combined), reusing your existing tab components
+where the content overlaps:
+
+- "Water" tab: reuse your existing Water Access tab, just update it to
+  pull from the new site.water field (summary + detail) instead of the old
+  waterAccess/waterAccessDetail fields. Keep the nearby water sources
+  table, availability timeline, and supporting documents sections as they
+  are.
+
+- "Power" tab: this replaces the electrical portion of your old
+  Infrastructure tab. Show all of site.power (summary + detail fields):
+  distance to substation, available capacity, reliability, outage history,
+  electricity price, renewable energy availability, expansion potential.
+  Include the nearby substation info that used to live in the "Nearby
+  Infrastructure" card.
+
+- "Climate" tab: this is new. Show average yearly temp, peak summer temp,
+  humidity, extreme heat days, and estimated PUE impact, laid out as
+  labeled stat rows. Add a short AI recommendation callout (same reusable
+  component style as other tabs) commenting on how this site's climate
+  affects cooling technology choice.
+
+- "Connectivity" tab: this replaces the fiber portion of your old
+  Infrastructure tab. Show distance to backbone, fiber provider count,
+  redundancy, latency to major cities, and proximity to internet exchanges.
+
+- "Land" tab: this is new. Show land price, parcel size, flood risk,
+  flatness/slope, soil stability, room for expansion, and distance to
+  roads/highways.
+
+- "Zoning" tab: this replaces your old Regulatory tab's permitting-focused
+  content (keep the Required Agencies, Required Permits, Approval Process
+  timeline, and Similar Projects sections you already built — they still
+  belong here), and ADD the new zoning-specific fields: SEZ status, tax
+  incentives, environmental restrictions, government support level, and
+  ease of obtaining permits.
+
+Keep Forecast, Documents, and Compare tabs as they already are — they
+don't need structural changes, though you may want to eventually reference
+the six new dimensions in the Compare tab's rows (optional, not required
+for this phase).
+
+Make sure clicking "View Details" on each of the six new Overview cards
+correctly jumps to its matching tab (Water card → Water tab, Power card →
+Power tab, and so on for all six) — reuse the same tab-jumping mechanism
+you already built for this.
