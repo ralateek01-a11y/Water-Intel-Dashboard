@@ -36,6 +36,7 @@ import {
   ChevronDown as ChevronDownIcon,
   Plus,
   X,
+  Printer,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
@@ -183,6 +184,8 @@ interface Site {
 interface SiteDetailProps {
   site: Site;
   onNavigateToChat?: (prefill: string) => void;
+  compareIds?: string[];
+  onToggleCompare?: (id: string) => void;
 }
 
 /* ─── helpers ─────────────────────────────────────────────── */
@@ -1724,9 +1727,18 @@ const COMPARE_ROWS: CompareRow[] = [
   },
 ];
 
-function CompareTab({ site }: { site: Site }) {
-  const [comparedIds, setComparedIds] = useState<string[]>([]);
+function CompareTab({ site, externalCompareIds }: { site: Site; externalCompareIds?: string[] }) {
+  const [comparedIds, setComparedIds] = useState<string[]>(() =>
+    (externalCompareIds ?? []).filter(id => id !== site.id).slice(0, 2)
+  );
   const [selectorOpen, setSelectorOpen] = useState(false);
+
+  // Sync when the external list changes (from "Add to Compare" header button)
+  React.useEffect(() => {
+    const incoming = (externalCompareIds ?? []).filter(id => id !== site.id).slice(0, 2);
+    setComparedIds(incoming);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [(externalCompareIds ?? []).join(','), site.id]);
   const allSites = getSitesSortedByScore() as Site[];
 
   const comparedSites = comparedIds.map(id => getSiteById(id) as Site).filter(Boolean);
@@ -2038,12 +2050,361 @@ function PlaceholderTab({ name }: { name: string }) {
   );
 }
 
-/* ─── main component ──────────────────────────────────────── */
-export function SiteDetail({ site, onNavigateToChat }: SiteDetailProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('Overview');
+/* ─── Report helpers ──────────────────────────────────────── */
+function ReportSection({ title, icon: Icon, iconColor = 'text-[#10B981]', children }: {
+  title: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  iconColor?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border border-[#1F2937] rounded-xl overflow-hidden">
+      <div className="flex items-center gap-3 px-5 py-3.5 bg-[#0D1424] border-b border-[#1F2937]">
+        <div className="w-7 h-7 rounded-lg bg-[#1F2937] flex items-center justify-center flex-shrink-0">
+          <Icon className={`w-4 h-4 ${iconColor}`} />
+        </div>
+        <span className="text-[14px] font-semibold text-white">{title}</span>
+      </div>
+      <div className="p-5 bg-[#111827]">{children}</div>
+    </div>
+  );
+}
+
+function ReportStatGrid({ items }: { items: { label: string; value: React.ReactNode; highlight?: string }[] }) {
+  return (
+    <div className="grid grid-cols-3 gap-3 mb-4">
+      {items.map((item, i) => (
+        <div key={i} className="bg-[#0D1424] border border-[#1F2937] rounded-lg p-3">
+          <p className="text-[11px] text-[#6B7280] mb-1">{item.label}</p>
+          <p className={`text-[15px] font-bold leading-snug ${item.highlight ?? 'text-white'}`}>{item.value}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ReportDetailRows({ rows }: { rows: { label: string; value: React.ReactNode }[] }) {
+  return (
+    <div className="flex flex-col gap-2">
+      {rows.map((row, i) => (
+        <div key={i} className="flex items-start justify-between gap-4 text-[13px]">
+          <span className="text-[#6B7280] flex-shrink-0 whitespace-nowrap">{row.label}</span>
+          <span className="text-[#D1D5DB] text-right leading-snug">{row.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─── Full Report Modal ────────────────────────────────────── */
+function FullReportModal({ site, onClose }: { site: Site; onClose: () => void }) {
   const sc = scoreColors(site.overallScore);
+  const w = site.water;
+  const pw = site.power;
+  const cl = site.climate;
+  const co = site.connectivity;
+  const la = site.land;
+  const z = site.zoning;
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const waterScore = w?.summary.availabilityScore ?? site.waterAccess?.score ?? 0;
+  const infraScore = site.infrastructure?.score ?? 0;
+  const regScore   = site.regulatory?.score   ?? 0;
+
+  const relColor = (r: string) =>
+    r === 'High' ? 'text-[#10B981]' : r === 'Low' ? 'text-red-400' : 'text-amber-400';
+  const permitColor = (v: string) =>
+    v === 'Yes' ? 'text-[#10B981]' : v === 'No' ? 'text-red-400' : 'text-amber-400';
+  const easeColor = (v: string) =>
+    v === 'Easy' ? 'text-[#10B981]' : v === 'Difficult' ? 'text-red-400' : 'text-amber-400';
 
   return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center">
+      {/* backdrop */}
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
+
+      {/* modal */}
+      <div className="relative z-10 w-full max-w-[880px] mx-4 max-h-[92vh] flex flex-col bg-[#0B1220] border border-[#1F2937] rounded-2xl shadow-2xl overflow-hidden">
+
+        {/* ── Header ── */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1F2937] bg-[#0D1424] flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#10B981]/10 border border-[#10B981]/20 flex items-center justify-center flex-shrink-0">
+              <FileBarChart2 className="w-[18px] h-[18px] text-[#10B981]" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-[#6B7280] uppercase tracking-widest font-semibold">Site Intelligence Report</p>
+              <h2 className="text-[16px] font-bold text-white leading-tight truncate">{site.name}</h2>
+            </div>
+            <span className={`inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1 rounded-full border flex-shrink-0 ${sc.bg} ${sc.text} ${sc.border}`}>
+              <span className="text-[17px] font-bold">{site.overallScore}</span>
+              {site.rating}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-1.5 border border-[#1F2937] bg-transparent text-[#9CA3AF] hover:text-white hover:border-[#374151] rounded-md px-3.5 py-2 text-sm transition-colors"
+            >
+              <Printer className="w-4 h-4" />
+              Print
+            </button>
+            <button
+              onClick={onClose}
+              className="flex items-center gap-1.5 border border-[#374151] bg-[#1F2937] text-[#D1D5DB] hover:bg-[#374151] rounded-md px-3.5 py-2 text-sm transition-colors"
+            >
+              <X className="w-4 h-4" />
+              Close
+            </button>
+          </div>
+        </div>
+
+        {/* ── Scrollable body ── */}
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5">
+
+          {/* Site meta row */}
+          <div className="flex items-center justify-between text-[13px] text-[#6B7280] pb-4 border-b border-[#1F2937]">
+            <div className="flex items-center gap-5">
+              <span className="flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-[#10B981]" />{site.region} Region
+              </span>
+              {site.distanceFromRiyadh && (
+                <span>{site.distanceFromRiyadh} km from Riyadh</span>
+              )}
+            </div>
+            <span>Generated {today}</span>
+          </div>
+
+          {/* ── Executive Summary ── */}
+          <div className="bg-[#0D1424] border border-[#1F2937] rounded-xl p-5">
+            <p className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-widest mb-4">Executive Summary</p>
+            <div className="flex items-center gap-6">
+              <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                <CircleGauge score={site.overallScore} size={96} />
+                <span className={`text-[12px] font-semibold ${sc.text}`}>Overall Score</span>
+              </div>
+              <div className="flex-1 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {waterScore > 0 && (
+                  <div className="bg-[#111827] border border-[#1F2937] rounded-lg p-3">
+                    <p className="text-[11px] text-[#6B7280] mb-1">Water Access</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-[22px] font-bold text-sky-400">{waterScore}</span>
+                      <span className="text-[11px] text-[#6B7280]">/ 100</span>
+                    </div>
+                  </div>
+                )}
+                {infraScore > 0 && (
+                  <div className="bg-[#111827] border border-[#1F2937] rounded-lg p-3">
+                    <p className="text-[11px] text-[#6B7280] mb-1">Infrastructure</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-[22px] font-bold text-amber-400">{infraScore}</span>
+                      <span className="text-[11px] text-[#6B7280]">/ 100</span>
+                    </div>
+                  </div>
+                )}
+                {regScore > 0 && (
+                  <div className="bg-[#111827] border border-[#1F2937] rounded-lg p-3">
+                    <p className="text-[11px] text-[#6B7280] mb-1">Regulatory</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className={`text-[22px] font-bold ${regScore >= 70 ? 'text-[#10B981]' : regScore >= 50 ? 'text-amber-400' : 'text-red-400'}`}>{regScore}</span>
+                      <span className="text-[11px] text-[#6B7280]">/ 100</span>
+                    </div>
+                  </div>
+                )}
+                {pw && (
+                  <div className="bg-[#111827] border border-[#1F2937] rounded-lg p-3">
+                    <p className="text-[11px] text-[#6B7280] mb-1">Power Capacity</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-[22px] font-bold text-amber-300">{pw.summary.availableCapacityMW}</span>
+                      <span className="text-[11px] text-[#6B7280]">MW</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Water ── */}
+          {w && (
+            <ReportSection title="Water Access" icon={Droplets} iconColor="text-sky-400">
+              <ReportStatGrid items={[
+                { label: 'Availability Score', value: w.summary.availabilityScore, highlight: scoreColors(w.summary.availabilityScore).text },
+                { label: 'Distance to Supply', value: w.summary.distanceToInfrastructure },
+                { label: 'Reliability',        value: w.summary.reliability, highlight: relColor(w.summary.reliability) },
+              ]} />
+              <ReportDetailRows rows={[
+                { label: 'Water cost',    value: w.detail.cost },
+                { label: 'Source',        value: w.detail.sustainability },
+                { label: 'Drought risk',  value: <span className={riskColors(w.detail.droughtRisk as 'Low'|'Medium'|'High').text}>{w.detail.droughtRisk}</span> },
+              ]} />
+              {site.coolingImpact && (
+                <div className="mt-4 pt-4 border-t border-[#1F2937]">
+                  <p className="text-[12px] font-semibold text-[#6B7280] mb-2.5">Cooling Water Demand (additional m³/day)</p>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
+                    {[
+                      { label: 'Air Cooling',       value: site.coolingImpact.airCooling },
+                      { label: 'Liquid Cooling',     value: site.coolingImpact.liquidCooling },
+                      { label: 'Immersion Cooling',  value: site.coolingImpact.immersionCooling },
+                      { label: 'Direct Liquid (DLC)',value: site.coolingImpact.dlcCooling },
+                    ].map((c, i) => (
+                      <div key={i} className="flex justify-between text-[13px]">
+                        <span className="text-[#6B7280]">{c.label}</span>
+                        <span className="text-[#D1D5DB] font-medium">{c.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </ReportSection>
+          )}
+
+          {/* ── Power ── */}
+          {pw && (
+            <ReportSection title="Power" icon={Zap} iconColor="text-amber-400">
+              <ReportStatGrid items={[
+                { label: 'Distance to Substation', value: pw.summary.distanceToSubstation },
+                { label: 'Available Capacity',     value: `${pw.summary.availableCapacityMW} MW`, highlight: 'text-amber-300' },
+                { label: 'Grid Reliability',       value: pw.summary.reliability, highlight: relColor(pw.summary.reliability) },
+              ]} />
+              <ReportDetailRows rows={[
+                { label: 'Outage history',       value: pw.detail.outageHistory },
+                { label: 'Electricity price',    value: pw.detail.electricityPrice },
+                { label: 'Renewable options',    value: pw.detail.renewableAvailability },
+                { label: 'Expansion potential',  value: pw.detail.expansionPotential },
+              ]} />
+            </ReportSection>
+          )}
+
+          {/* ── Climate ── */}
+          {cl && (
+            <ReportSection title="Climate / Cooling Efficiency" icon={Thermometer} iconColor="text-rose-400">
+              <ReportStatGrid items={[
+                { label: 'Avg. Yearly Temp', value: cl.summary.avgYearlyTemp },
+                { label: 'Peak Summer',      value: cl.summary.peakSummerTemp, highlight: 'text-rose-400' },
+                { label: 'PUE Penalty',      value: cl.summary.estimatedPUEImpact.split(' ')[0], highlight: 'text-amber-400' },
+              ]} />
+              <ReportDetailRows rows={[
+                { label: 'Humidity',           value: cl.detail.humidity },
+                { label: 'Extreme heat days',  value: `${cl.detail.extremeHeatDays} days/year above 40°C` },
+                { label: 'Full PUE impact',    value: cl.summary.estimatedPUEImpact },
+              ]} />
+            </ReportSection>
+          )}
+
+          {/* ── Connectivity ── */}
+          {co && (
+            <ReportSection title="Connectivity" icon={Network} iconColor="text-violet-400">
+              <ReportStatGrid items={[
+                { label: 'Distance to Backbone', value: co.summary.distanceToBackbone },
+                {
+                  label: 'Fiber Providers',
+                  value: co.summary.fiberProviders === 0 ? 'None' : `${co.summary.fiberProviders} carrier${co.summary.fiberProviders > 1 ? 's' : ''}`,
+                  highlight: co.summary.fiberProviders >= 2 ? 'text-[#10B981]' : co.summary.fiberProviders === 1 ? 'text-amber-400' : 'text-red-400',
+                },
+                { label: 'Redundancy', value: co.summary.redundancy, highlight: co.summary.redundancy === 'Yes' ? 'text-[#10B981]' : co.summary.redundancy === 'No' ? 'text-red-400' : 'text-amber-400' },
+              ]} />
+              <ReportDetailRows rows={[
+                { label: 'Latency to cities',         value: co.detail.latencyToMajorCities },
+                { label: 'Internet exchange proximity', value: co.detail.proximityToIX },
+              ]} />
+            </ReportSection>
+          )}
+
+          {/* ── Land ── */}
+          {la && (
+            <ReportSection title="Land / Topography" icon={MapPin} iconColor="text-emerald-400">
+              <ReportStatGrid items={[
+                { label: 'Land Price',       value: la.summary.landPrice },
+                { label: 'Available Parcel', value: la.summary.parcelSize, highlight: 'text-[#10B981]' },
+                { label: 'Flood Risk',       value: la.summary.floodRisk, highlight: la.summary.floodRisk === 'Low' ? 'text-[#10B981]' : la.summary.floodRisk === 'High' ? 'text-red-400' : 'text-amber-400' },
+              ]} />
+              <ReportDetailRows rows={[
+                { label: 'Flatness / slope',    value: la.detail.flatnessSlope },
+                { label: 'Soil stability',      value: la.detail.soilStability },
+                { label: 'Room for expansion',  value: la.detail.roomForExpansion },
+                { label: 'Distance to roads',   value: la.detail.distanceToRoads },
+              ]} />
+            </ReportSection>
+          )}
+
+          {/* ── Zoning ── */}
+          {z && (
+            <ReportSection title="Zoning & Regulatory" icon={Shield} iconColor="text-indigo-400">
+              <ReportStatGrid items={[
+                { label: 'DC Permitted',     value: z.summary.dataCenterPermitted, highlight: permitColor(z.summary.dataCenterPermitted) },
+                { label: 'Permitting Speed', value: z.summary.permittingSpeed,     highlight: 'text-amber-300' },
+                { label: 'Ease of Permits',  value: z.detail.easeOfPermits,        highlight: easeColor(z.detail.easeOfPermits) },
+              ]} />
+              <ReportDetailRows rows={[
+                { label: 'SEZ status',                  value: z.summary.sezStatus },
+                { label: 'Tax incentives',              value: z.detail.taxIncentives },
+                { label: 'Environmental restrictions',  value: z.detail.environmentalRestrictions },
+                { label: 'Government support',          value: z.detail.governmentSupport },
+              ]} />
+            </ReportSection>
+          )}
+
+          {/* ── Nearby Infrastructure table ── */}
+          {(site.nearbyInfrastructure ?? []).length > 0 && (
+            <ReportSection title="Nearby Infrastructure" icon={Building2} iconColor="text-[#9CA3AF]">
+              <table className="w-full text-[13px]">
+                <thead>
+                  <tr className="border-b border-[#1F2937]">
+                    <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-4">Name</th>
+                    <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-4">Type</th>
+                    <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2 pr-4">Distance</th>
+                    <th className="text-left text-[11px] font-medium text-[#6B7280] pb-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(site.nearbyInfrastructure ?? []).map((item, i) => (
+                    <tr key={i} className="border-b border-[#1F2937]/50 last:border-0">
+                      <td className="py-2.5 pr-4 text-white font-medium">{item.name}</td>
+                      <td className="py-2.5 pr-4 text-[#9CA3AF]">{item.type}</td>
+                      <td className="py-2.5 pr-4 text-[#9CA3AF]">{item.distance}</td>
+                      <td className="py-2.5">
+                        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${statusColor(item.status)}`}>{item.status}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </ReportSection>
+          )}
+
+          {/* Footer */}
+          <div className="flex items-center justify-between text-[11px] text-[#4B5563] pt-2 border-t border-[#1F2937]">
+            <span>WaterIntel — AI-Powered Water Intelligence Platform</span>
+            <span>Confidential · For internal use only</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── main component ──────────────────────────────────────── */
+export function SiteDetail({ site, onNavigateToChat, compareIds = [], onToggleCompare }: SiteDetailProps) {
+  const [activeTab, setActiveTab] = useState<Tab>('Overview');
+  const [showReport,    setShowReport]    = useState(false);
+  const [compareToast,  setCompareToast]  = useState<'added' | 'already' | null>(null);
+  const sc = scoreColors(site.overallScore);
+
+  const isInCompare = compareIds.includes(site.id);
+
+  function handleAddToCompare() {
+    if (isInCompare) {
+      setCompareToast('already');
+    } else {
+      onToggleCompare?.(site.id);
+      setCompareToast('added');
+      setActiveTab('Compare');
+    }
+    setTimeout(() => setCompareToast(null), 2500);
+  }
+
+  return (
+  <>
     <div className="bg-[#111827] border border-[#1F2937] rounded-xl overflow-hidden flex flex-col">
 
       {/* ── Card header ── */}
@@ -2074,11 +2435,21 @@ export function SiteDetail({ site, onNavigateToChat }: SiteDetailProps) {
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          <button className="flex items-center gap-1.5 border border-[#1F2937] bg-transparent text-[#D1D5DB] hover:bg-[#1F2937]/60 rounded-md px-3.5 py-2 text-sm transition-colors">
+          <button
+            onClick={handleAddToCompare}
+            className={`flex items-center gap-1.5 border rounded-md px-3.5 py-2 text-sm transition-colors ${
+              isInCompare
+                ? 'border-[#10B981]/40 bg-[#10B981]/10 text-[#10B981]'
+                : 'border-[#1F2937] bg-transparent text-[#D1D5DB] hover:bg-[#1F2937]/60'
+            }`}
+          >
             <GitCompare className="w-4 h-4" />
-            Add to Compare
+            {isInCompare ? 'In Comparison' : 'Add to Compare'}
           </button>
-          <button className="flex items-center gap-1.5 bg-[#10B981] text-white hover:bg-[#059669] rounded-md px-3.5 py-2 text-sm font-medium transition-colors">
+          <button
+            onClick={() => setShowReport(true)}
+            className="flex items-center gap-1.5 bg-[#10B981] text-white hover:bg-[#059669] rounded-md px-3.5 py-2 text-sm font-medium transition-colors"
+          >
             <FileBarChart2 className="w-4 h-4" />
             View Full Report
           </button>
@@ -2116,8 +2487,34 @@ export function SiteDetail({ site, onNavigateToChat }: SiteDetailProps) {
         {activeTab === 'Zoning'       && <ZoningTab site={site} />}
         {activeTab === 'Forecast'     && <ForecastTab site={site} />}
         {activeTab === 'Documents'    && <DocumentsTab site={site} onNavigateToChat={onNavigateToChat} />}
-        {activeTab === 'Compare'      && <CompareTab site={site} />}
+        {activeTab === 'Compare'      && <CompareTab site={site} externalCompareIds={compareIds} />}
       </div>
     </div>
+
+    {/* ── Compare toast ── */}
+    {compareToast && (
+      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-[#111827] border border-[#1F2937] rounded-xl px-4 py-3 shadow-2xl">
+        {compareToast === 'added' ? (
+          <>
+            <CheckCircle2 className="w-4 h-4 text-[#10B981] flex-shrink-0" />
+            <span className="text-[13px] text-white">
+              Added to comparison —{' '}
+              <button onClick={() => setActiveTab('Compare')} className="text-[#10B981] hover:underline font-medium">
+                view Compare tab
+              </button>
+            </span>
+          </>
+        ) : (
+          <>
+            <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+            <span className="text-[13px] text-white">Already in comparison</span>
+          </>
+        )}
+      </div>
+    )}
+
+    {/* ── Full Report modal ── */}
+    {showReport && <FullReportModal site={site} onClose={() => setShowReport(false)} />}
+  </>
   );
 }

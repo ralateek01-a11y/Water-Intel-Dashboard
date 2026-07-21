@@ -177,6 +177,17 @@ function Shell() {
     }, 1200);
   }
 
+  // Compare state (shared across all SiteDetail cards)
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+
+  function handleToggleCompare(id: string) {
+    setCompareIds(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      if (prev.length >= 3) return prev; // cap at 3 total
+      return [...prev, id];
+    });
+  }
+
   // Projects state
   const [projects, setProjects] = useState<Project[]>(initialProjects as Project[]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -766,6 +777,8 @@ function Shell() {
                     setChatPreFill(prefill);
                     setActivePage('ai-chat');
                   }}
+                  compareIds={compareIds}
+                  onToggleCompare={handleToggleCompare}
                 />
               </div>
             )}
